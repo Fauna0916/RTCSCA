@@ -7,9 +7,6 @@
 \setmonofont{DejaVu Sans Mono}[Scale=0.82]
 \usepackage{microtype}
 \usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{tabularx}
-\usepackage{array}
 \usepackage{amsmath}
 \usepackage{siunitx}
 \usepackage{xcolor}
@@ -17,6 +14,7 @@
 \usepackage{caption}
 \usepackage{float}
 \usepackage{enumitem}
+\usepackage{needspace}
 \usepackage{fancyhdr}
 \usepackage{titlesec}
 \usepackage[most]{tcolorbox}
@@ -83,16 +81,6 @@
   {\sffamily\bfseries\fontsize{30}{36}\selectfont Laboratory 1\par}
   \vspace{4mm}
   {\sffamily\Large Registers, GPIO, Timers and Interrupts\par}
-  \vspace{18mm}
-  \begin{tcolorbox}[width=0.84\textwidth,colback=soft,colframe=blue!55!black,arc=2mm]
-    \centering
-    \begin{tabular}{@{}rl@{}}
-      \textbf{Target device:} & STM32L073RZT6 \quad (Arm Cortex-M0+)\\
-      \textbf{Board:} & NUCLEO-L073RZ\\
-      \textbf{System clock:} & \SI{32}{\mega\hertz}\\
-      \textbf{Toolchain:} & STM32CubeMX 6.17 / Keil MDK-ARM 5
-    \end{tabular}
-  \end{tcolorbox}
   \vfill
   \begin{tabular}{@{}>{\bfseries}rl@{}}
     Student: & \StudentName\\[2mm]
@@ -103,37 +91,9 @@
   {\large \today\par}
 \end{titlepage}
 
-\begin{abstract}
-This laboratory implements direct GPIO register operations and interrupt-driven timing on an STM32 microcontroller. The register exercises establish how masks isolate and update individual fields. The firmware then reads the NUCLEO-L073RZ blue button through GPIOC, controls the built-in LD2 LED through GPIOA, and uses an external interrupt together with TIM2 to start and stop a \SI{1.5}{\second} blink sequence. The final Keil build completed with zero errors and zero warnings.
-\end{abstract}
-
-\tableofcontents
-\clearpage
-
-\section{Hardware and Project Configuration}
-
-The implementation targets the STM32L073RZT6, which contains a \SI{32}{\mega\hertz} Arm Cortex-M0+ core, 192~KB ECC Flash, 20~KB RAM, and 6~KB ECC data EEPROM~\cite{stm32l073-ds}. The NUCLEO-L073RZ connects the green user LED LD2 to PA5 and the blue user button B1 to PC13~\cite{nucleo-um}.
-
-\begin{table}[H]
-\centering
-\caption{Lab 1 peripheral configuration.}
-\begin{tabularx}{0.92\textwidth}{@{}l l X@{}}
-\toprule
-\textbf{Resource} & \textbf{Setting} & \textbf{Purpose}\\
-\midrule
-PA5 & GPIO push-pull output & Drives the active-high LD2 LED\\
-PC13 & Falling-edge EXTI input & Detects a press of the B1 button\\
-TIM2 & Internal clock, update interrupt & Generates the LED toggle interval\\
-SYSCLK & HSI16, PLL $\times 4 / 2$ & Supplies a \SI{32}{\mega\hertz} system and timer clock\\
-\bottomrule
-\end{tabularx}
-\end{table}
-
-STM32CubeMX generates the clock, GPIO, TIM2, and NVIC initialization. Independently written application code is separated into the project-local \texttt{Lab1/Inc} and \texttt{Lab1/Src} directories.
-
 \section{Task 1: GPIOB Pin 5 Register Configuration}
 
-The task uses the four-bit \texttt{GPIOx\_CRL} pin field described by the STM32F1 register model in the laboratory brief~\cite{rm0008}. Pin 5 occupies bits 23:20. General-purpose push-pull output mode requires \texttt{CNF[1:0] = 00}, and the \SI{50}{\mega\hertz} output selection requires \texttt{MODE[1:0] = 11}; therefore the complete nibble is \texttt{0011}.
+The task uses the four-bit \texttt{GPIOx\_CRL} pin field described in the laboratory brief~\cite{labbrief} and the STM32F1 reference manual~\cite{rm0008}. Pin 5 occupies bits 23:20. General-purpose push-pull output mode requires \texttt{CNF[1:0] = 00}, and the \SI{50}{\mega\hertz} output selection requires \texttt{MODE[1:0] = 11}; therefore the complete nibble is \texttt{0011}.
 
 \subsection{Step-by-step bitwise operations}
 
@@ -190,7 +150,7 @@ The clear and set transformations can be combined into one read-modify-write sta
 GPIOB->CRL = (GPIOB->CRL & ~(0xFU << 20U)) | (0x3U << 20U);
 \end{lstlisting}
 
-The mask preserves all fields other than PB5, while the encoded value writes \texttt{0011} into bits 23:20. In the STM32L073 firmware project, the equivalent output function is generated through the STM32L0 \texttt{MODER}, \texttt{OTYPER}, and \texttt{OSPEEDR} register model~\cite{rm0367}.
+The mask preserves all fields other than PB5, while the encoded value writes \texttt{0011} into bits 23:20.
 
 \section{Task 2: Evaluating a GPIO Input Bit}
 
@@ -218,7 +178,7 @@ which is non-zero, so \texttt{Pinx} is \texttt{true}. If the register value is \
 
 \section{Task 3: Button-Controlled LED with IDR and ODR}
 
-B1 is read from bit 13 of \texttt{GPIOC->IDR}. A press produces the active input level used by the falling-edge board configuration. PA5 is then set or cleared in \texttt{GPIOA->ODR}; the other output bits remain unchanged.
+B1 is read from bit 13 of \texttt{GPIOC->IDR}. A press produces the active input level used by the falling-edge board configuration~\cite{nucleo-um}. PA5 is then set or cleared in \texttt{GPIOA->ODR}; the other output bits remain unchanged.
 
 \lstinputlisting[caption={Task 3 register-level implementation.},label={lst:task3}]{../Firmware/Lab1/Lab1/Src/task3_polling.c}
 
@@ -228,7 +188,7 @@ The Boolean expression normalizes the button state, after which the two ODR oper
 
 \subsection{Timer calculation}
 
-TIM2 receives a \SI{32}{\mega\hertz} clock because APB1 uses a divider of one. A \SI{1}{\kilo\hertz} counter tick is formed with a division factor of 32,000:
+TIM2 receives a \SI{32}{\mega\hertz} clock because APB1 uses a divider of one~\cite{rm0367}. A \SI{1}{\kilo\hertz} counter tick is formed with a division factor of 32,000:
 
 \[
 f_{\mathrm{counter}} = \frac{32\,000\,000}{31999 + 1} = \SI{1000}{\hertz}.
@@ -277,43 +237,16 @@ The PC13 falling edge calls \texttt{HAL\_GPIO\_EXTI\_Callback}. The first accept
 
 \lstinputlisting[caption={Task 4 application module.},label={lst:task4}]{../Firmware/Lab1/Lab1/Src/lab1_app.c}
 
+\Needspace{3\baselineskip}
 The main loop executes \texttt{\_\_WFI()} and contains no delay call. All LED timing is generated by the timer update interrupt, while the button transition is captured by EXTI.
 
-\section{Build Results}
+\section{Lab Summary}
 
-The STM32CubeMX-generated Keil project was compiled with Arm Compiler 5.06 update 7. Table~\ref{tab:build} summarizes the resulting image.
-
-\begin{table}[H]
-\centering
-\caption{Keil build summary.}
-\label{tab:build}
-\begin{tabular}{@{}lr@{}}
-\toprule
-\textbf{Item} & \textbf{Result}\\
-\midrule
-Errors & 0\\
-Warnings & 0\\
-Code & 4,876 bytes\\
-Read-only data & 252 bytes\\
-Read-write data & 28 bytes\\
-Zero-initialized data & 1,700 bytes\\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The register masks preserve unrelated GPIO pins, and the timer equation matches the generated prescaler and auto-reload values. The interrupt state sequence satisfies the two button actions: start the timed blink and stop with the LED off.
-
-\section{Conclusion}
-
-Together, the four tasks connect register fields with event-driven firmware. Masking and shifting provide deterministic GPIO configuration and sampling, while EXTI and TIM2 separate asynchronous user input from periodic LED timing. The resulting project uses the STM32L073RZT6 at \SI{32}{\mega\hertz}, implements the \SI{1.5}{\second} interval without a delay function, and compiles cleanly in Keil MDK-ARM.
+Task 1 used masking, clearing, and shifting to place the required configuration in one GPIO pin field without changing neighbouring fields. Task 2 showed how an IDR mask isolates one sampled input and converts it to a Boolean value. Task 3 applied the same register operations to map the button state directly to the LED state. Task 4 combined a button external interrupt with TIM2 update interrupts: the first press starts a \SI{1.5}{\second} blink sequence, each timer update toggles the LED, and the second press stops the timer and leaves the LED off. Together, the tasks demonstrate the progression from individual bit operations to a small event-driven embedded application.
 
 \begin{thebibliography}{9}
 \bibitem{labbrief}
 RTCSCA, \emph{Lab 1: Registers, Timers and Interrupts}, 2026--2027.
-
-\bibitem{stm32l073-ds}
-STMicroelectronics, \emph{STM32L073xx Datasheet}, DS10685.\\
-\url{https://www.st.com/resource/en/datasheet/stm32l073rz.pdf}
 
 \bibitem{rm0367}
 STMicroelectronics, \emph{STM32L0x3 Reference Manual}, RM0367.\\
