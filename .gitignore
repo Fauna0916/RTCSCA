@@ -11,6 +11,7 @@ tmp/
 **/*.lst
 
 # LaTeX intermediate files
+**/report/build/
 **/*.aux
 **/*.bbl
 **/*.bcf

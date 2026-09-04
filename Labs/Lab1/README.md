@@ -26,3 +26,4 @@ Firmware/Lab1/
 
 Open `Firmware/Lab1/Lab1.ioc` in STM32CubeMX to inspect the configuration, or open `Firmware/Lab1/MDK-ARM/Lab1.uvprojx` in Keil MDK-ARM 5 to build the project.
 
+The editable report source is in `report/lab1_report.tex`; edit the identity fields in `report/metadata.tex`. The compiled report is available at `../../output/pdf/lab1_report.pdf`.

@@ -8,6 +8,6 @@ Each laboratory has its own generated STM32CubeMX/Keil project. Independently wr
 
 - [Task overview](Labs/Lab1/README.md)
 - [STM32CubeMX project](Labs/Lab1/Firmware/Lab1/Lab1.ioc)
+- [Compiled Lab 1 report](output/pdf/lab1_report.pdf)
 - [Hardware background](docs/hardware.md)
 - [Embedded programming principles](docs/embedded-principles.md)
-
