@@ -184,7 +184,7 @@ For pin 13, the mask is $1 \ll 13 = \mathtt{0x2000}$. If \texttt{GPIOC->IDR} is 
 \mathtt{0x2400 \ \& \ 0x2000 = 0x2000},
 \]
 
-which is non-zero, so \texttt{Pinx} is \texttt{true}. If the register value is \texttt{0x0400}, the AND result is zero and \texttt{Pinx} is \texttt{false}. The \texttt{bool} type is supplied by \texttt{<stdbool.h>}.
+which is non-zero, so \texttt{Pinx} is \texttt{true}. If the register value is \texttt{0x0400}, the AND result is zero and \texttt{Pinx} is \texttt{false}.
 
 \section{Task 3: Button-Controlled LED with IDR and ODR}
 
