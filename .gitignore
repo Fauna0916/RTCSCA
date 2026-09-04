@@ -6,7 +6,9 @@ tmp/
 **/*.uvoptx
 **/MDK-ARM/Objects/
 **/MDK-ARM/Listings/
+**/MDK-ARM/Lab[0-9]*/
 **/*.dep
+**/*.lst
 
 # LaTeX intermediate files
 **/*.aux
@@ -24,4 +26,3 @@ tmp/
 # Python caches
 **/__pycache__/
 **/*.pyc
-
