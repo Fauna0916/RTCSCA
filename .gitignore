@@ -1,0 +1,27 @@
+# Temporary extraction and tool downloads
+tmp/
+
+# Keil user state and build output
+**/*.uvguix.*
+**/*.uvoptx
+**/MDK-ARM/Objects/
+**/MDK-ARM/Listings/
+**/*.dep
+
+# LaTeX intermediate files
+**/*.aux
+**/*.bbl
+**/*.bcf
+**/*.blg
+**/*.fdb_latexmk
+**/*.fls
+**/*.log
+**/*.out
+**/*.run.xml
+**/*.synctex.gz
+**/*.toc
+
+# Python caches
+**/__pycache__/
+**/*.pyc
+
