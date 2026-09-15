@@ -1,6 +1,6 @@
 \documentclass[11pt,a4paper]{article}
 
-\usepackage[a4paper,margin=23mm,headheight=15pt]{geometry}
+\usepackage[a4paper,margin=23mm]{geometry}
 \usepackage{fontspec}
 \setmainfont{TeX Gyre Pagella}
 \setsansfont{TeX Gyre Heros}
@@ -15,7 +15,8 @@
 \usepackage{float}
 \usepackage{enumitem}
 \usepackage{needspace}
-\usepackage{fancyhdr}
+\usepackage{pdfpages}
+\usepackage{tikz}
 \usepackage{titlesec}
 \usepackage[most]{tcolorbox}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!55!black,citecolor=blue!45!black]{hyperref}
@@ -34,12 +35,7 @@
 \titlespacing*{\section}{0pt}{2.2ex plus 0.5ex}{1.0ex}
 \titlespacing*{\subsection}{0pt}{1.8ex plus 0.4ex}{0.7ex}
 
-\pagestyle{fancy}
-\fancyhf{}
-\lhead{RTCSCA Lab 1}
-\rhead{Registers, GPIO, Timers and Interrupts}
-\cfoot{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\pagestyle{plain}
 
 \lstdefinestyle{cstyle}{
   language=C,
@@ -73,23 +69,24 @@
 
 \begin{document}
 
-\begin{titlepage}
-  \centering
-  \vspace*{18mm}
-  {\sffamily\Large Real-Time Computer Systems and Computer Architecture\par}
-  \vspace{16mm}
-  {\sffamily\bfseries\fontsize{30}{36}\selectfont Laboratory 1\par}
-  \vspace{4mm}
-  {\sffamily\Large Registers, GPIO, Timers and Interrupts\par}
-  \vfill
-  \begin{tabular}{@{}>{\bfseries}rl@{}}
-    Student: & \StudentName\\[2mm]
-    Glasgow ID: & \GlasgowID\\[2mm]
-    UESTC ID: & \UESTCID
-  \end{tabular}
-  \vfill
-  {\large \today\par}
-\end{titlepage}
+\includepdf[
+  pages=1,
+  pagecommand={
+    \thispagestyle{empty}
+    \begin{tikzpicture}[remember picture,overlay]
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=121mm]current page.south west) {\StudentName};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=113mm]current page.south west) {\UoGID};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=105mm]current page.south west) {\UESTCID};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=97mm]current page.south west) {\ReportDate};
+    \end{tikzpicture}
+  }
+]{../Lab1H-RTCSA_2026-2027.pdf}
+
+\setcounter{page}{1}
 
 \begin{abstract}
 This laboratory investigates GPIO register manipulation and interrupt-driven timing in an STM32 embedded system. Individual register fields are configured through masking and shifting, a GPIO input expression is evaluated at bit level, and direct IDR and ODR operations are used to associate a push-button input with an LED output. A timer-driven application then combines an external button interrupt with periodic TIM2 update interrupts to start and stop LED blinking at \SI{1.5}{\second} intervals. The results demonstrate the progression from elementary bitwise operations to event-driven peripheral control.
