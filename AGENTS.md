@@ -38,7 +38,7 @@ Detailed reference material is maintained in `docs/hardware.md` and `docs/embedd
 - Omit incidental programming-language facts and internal development commentary, such as which standard header supplies a basic C type.
 - Describe the work as a completed laboratory implementation. Keep temporary access limitations and other process constraints out of the report.
 - Use Python plotting libraries such as seaborn and matplotlib for useful figures. When a required physical photograph cannot yet be taken, insert a clearly labelled placeholder indicating the image to add later.
-- Keep final PDFs in `output/pdf/` and editable report sources inside the corresponding laboratory directory.
+- Keep each final PDF beside its LaTeX source in the corresponding `Labs/Labx/report/` directory.
 
 ## Version control
 
