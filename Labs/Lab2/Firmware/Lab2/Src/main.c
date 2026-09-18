@@ -1,6 +1,6 @@
 #include "main.h"
 
-#include "lab2_app.h"
+#include "app.h"
 
 I2C_HandleTypeDef hi2c1;
 SPI_HandleTypeDef hspi1;
@@ -29,7 +29,7 @@ int main(void)
   MX_TIM21_Init();
   MX_USART2_UART_Init();
 
-  Lab2_AppInit(&huart2, &hi2c1, &hspi1, &htim2, &htim21);
+  Lab2_AppInit();
 
   while (1) {
     Lab2_AppProcess();
