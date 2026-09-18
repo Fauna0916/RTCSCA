@@ -8,10 +8,12 @@ bool Task1_ParseNumbers(const char *text, uint8_t values[3])
   unsigned int b;
   unsigned int c;
 
+  /* Convert the three space-separated fields received from the terminal. */
   if (sscanf(text, "%u %u %u", &a, &b, &c) != 3) {
     return false;
   }
 
+  /* A two-digit decimal integer is in the inclusive range 10 to 99. */
   if ((a < 10U) || (a > 99U)
       || (b < 10U) || (b > 99U)
       || (c < 10U) || (c > 99U)) {
@@ -26,6 +28,7 @@ bool Task1_ParseNumbers(const char *text, uint8_t values[3])
 
 bool Task1_Calculate(const uint8_t values[3], char operation, uint32_t *result)
 {
+  /* Accept the menu letter and the familiar arithmetic symbol. */
   if ((operation == 'A') || (operation == 'a') || (operation == '+')) {
     *result = (uint32_t)values[0] + values[1] + values[2];
     return true;

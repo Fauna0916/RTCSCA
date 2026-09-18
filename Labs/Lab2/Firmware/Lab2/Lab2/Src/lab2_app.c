@@ -110,6 +110,7 @@ static void HandleTask2(const char *line)
 
 static void HandleLine(const char *line)
 {
+  /* A completed UART line advances the selected task state. */
   if ((state == APP_TASK3_RUNNING) || (state == APP_TASK4_RUNNING)) {
     if ((line[0] == 'M') || (line[0] == 'm')) {
       ShowMenu();
@@ -165,6 +166,7 @@ static void UpdateSpiTask(void)
   if ((state != APP_TASK3_RUNNING) && (state != APP_TASK4_RUNNING)) {
     return;
   }
+  /* Periodic sampling leaves UART reception responsive between readings. */
   if ((now - last_sample_tick) < SAMPLE_INTERVAL_MS) {
     return;
   }
@@ -230,6 +232,7 @@ void Lab2_AppProcess(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
   if (huart == uart) {
+    /* Build one line a byte at a time and parse it outside the interrupt. */
     if ((rx_byte == '\r') || (rx_byte == '\n')) {
       if ((rx_length > 0U) && (line_ready == 0U)) {
         rx_line[rx_length] = '\0';

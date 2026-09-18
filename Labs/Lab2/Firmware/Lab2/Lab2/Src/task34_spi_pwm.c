@@ -16,11 +16,13 @@ static HAL_StatusTypeDef ReadRegister(SPI_HandleTypeDef *hspi,
   uint8_t dummy = 0xFFU;
   HAL_StatusTypeDef status;
 
+  /* The address byte loads the selected value into the Arduino SPI register. */
   HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
   status = HAL_SPI_TransmitReceive(hspi, &address, &discard, 1U,
                                    SPI_TIMEOUT_MS);
   if (status == HAL_OK) {
     HAL_Delay(1U);
+    /* A dummy byte supplies the clocks that return the selected data byte. */
     status = HAL_SPI_TransmitReceive(hspi, &dummy, value, 1U,
                                      SPI_TIMEOUT_MS);
   }
@@ -35,6 +37,7 @@ HAL_StatusTypeDef Task34_ReadAnalog(SPI_HandleTypeDef *hspi,
   uint8_t upper;
   HAL_StatusTypeDef status;
 
+  /* The supplied slave exposes the ADC sample as lower and upper bytes. */
   status = ReadRegister(hspi, 0x00U, &lower);
   if (status != HAL_OK) {
     return status;
@@ -54,6 +57,7 @@ uint32_t Task3_SetLedDuty(TIM_HandleTypeDef *htim, uint16_t analog_value)
   if (analog_value > ARDUINO_ADC_MAX) {
     analog_value = ARDUINO_ADC_MAX;
   }
+  /* Map 0--1023 linearly onto 0--1000 timer counts. */
   compare = ((uint32_t)analog_value * LED_PWM_COUNTS) / ARDUINO_ADC_MAX;
   __HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, compare);
   return compare;
@@ -67,6 +71,7 @@ uint32_t Task4_SetServoPosition(TIM_HandleTypeDef *htim,
   if (analog_value > ARDUINO_ADC_MAX) {
     analog_value = ARDUINO_ADC_MAX;
   }
+  /* At a 1 MHz timer tick, the compare value is the pulse width in us. */
   pulse = SERVO_MIN_PULSE_US
         + ((uint32_t)analog_value * SERVO_PULSE_RANGE_US) / ARDUINO_ADC_MAX;
   __HAL_TIM_SET_COMPARE(htim, TIM_CHANNEL_1, pulse);
