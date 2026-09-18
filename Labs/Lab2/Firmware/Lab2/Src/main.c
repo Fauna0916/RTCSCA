@@ -1,6 +1,8 @@
 #include "main.h"
 
-#include "app.h"
+#include "task1.h"
+#include "task2.h"
+#include "task34.h"
 
 I2C_HandleTypeDef hi2c1;
 SPI_HandleTypeDef hspi1;
@@ -29,11 +31,14 @@ int main(void)
   MX_TIM21_Init();
   MX_USART2_UART_Init();
 
-  Lab2_AppInit();
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim21, TIM_CHANNEL_1);
 
   while (1) {
-    Lab2_AppProcess();
-    __WFI();
+    Task1();
+    // Task2();
+    // Task3();
+    // Task4();
   }
 }
 

@@ -617,11 +617,6 @@
           <GroupName>Lab2</GroupName>
           <Files>
             <File>
-              <FileName>app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Lab2/Src/app.c</FilePath>
-            </File>
-            <File>
               <FileName>task1.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Lab2/Src/task1.c</FilePath>
@@ -632,14 +627,9 @@
               <FilePath>../Lab2/Src/task2.c</FilePath>
             </File>
             <File>
-              <FileName>task3.c</FileName>
+              <FileName>task34.c</FileName>
               <FileType>1</FileType>
-              <FilePath>../Lab2/Src/task3.c</FilePath>
-            </File>
-            <File>
-              <FileName>task4.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Lab2/Src/task4.c</FilePath>
+              <FilePath>../Lab2/Src/task34.c</FilePath>
             </File>
           </Files>
         </Group>

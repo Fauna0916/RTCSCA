@@ -1,30 +1,63 @@
 #include "task2.h"
 
+#include <stdio.h>
+#include <string.h>
+
 #define ARDUINO_ADDRESS (0x55U << 1U)
 
-void Task2_Exchange(I2C_HandleTypeDef *hi2c,
-                    uint8_t speed,
-                    uint8_t data,
-                    Task2_Result *result)
+static void ReadLine(char *line)
 {
-  uint8_t command = 0x80U + speed;
-  uint8_t buffer[4];
-  uint16_t length = data == 0U ? 2U : 4U;
+  uint8_t byte;
+  uint8_t i = 0U;
 
-  HAL_I2C_Master_Transmit(hi2c, ARDUINO_ADDRESS,
-                          &command, 1U, HAL_MAX_DELAY);
-  HAL_I2C_Master_Transmit(hi2c, ARDUINO_ADDRESS,
-                          &data, 1U, HAL_MAX_DELAY);
-  HAL_I2C_Master_Receive(hi2c, ARDUINO_ADDRESS,
-                         buffer, length, HAL_MAX_DELAY);
-
-  if (data == 0U) {
-    result->analog_value = buffer[0] | (buffer[1] << 8U);
-  } else {
-    result->text[0] = buffer[0];
-    result->text[1] = buffer[1];
-    result->text[2] = buffer[2];
-    result->text[3] = buffer[3];
-    result->text[4] = '\0';
+  while (1) {
+    HAL_UART_Receive(&huart2, &byte, 1U, HAL_MAX_DELAY);
+    if ((byte == '\r') || (byte == '\n')) {
+      line[i] = '\0';
+      return;
+    }
+    line[i++] = (char)byte;
   }
+}
+
+static void Print(const char *text)
+{
+  HAL_UART_Transmit(&huart2, (uint8_t *)text,
+                    (uint16_t)strlen(text), HAL_MAX_DELAY);
+}
+
+void Task2(void)
+{
+  char line[32];
+  char output[64];
+  uint8_t command;
+  uint8_t register_address;
+  uint8_t data[4];
+  unsigned int speed;
+  unsigned int select_data;
+
+  Print("Enter speed (0-3) and data (0-1): ");
+  ReadLine(line);
+  sscanf(line, "%u %u", &speed, &select_data);
+
+  command = 0x80U + (uint8_t)speed;
+  register_address = (uint8_t)select_data;
+  HAL_I2C_Master_Transmit(&hi2c1, ARDUINO_ADDRESS,
+                          &command, 1U, HAL_MAX_DELAY);
+  HAL_I2C_Master_Transmit(&hi2c1, ARDUINO_ADDRESS,
+                          &register_address, 1U, HAL_MAX_DELAY);
+
+  if (select_data == 0U) {
+    HAL_I2C_Master_Receive(&hi2c1, ARDUINO_ADDRESS,
+                           data, 2U, HAL_MAX_DELAY);
+    snprintf(output, sizeof(output), "Analog value: %u\r\n",
+             (unsigned int)(data[0] | (data[1] << 8U)));
+  } else {
+    HAL_I2C_Master_Receive(&hi2c1, ARDUINO_ADDRESS,
+                           data, 4U, HAL_MAX_DELAY);
+    snprintf(output, sizeof(output), "Data: %c%c%c%c\r\n",
+             data[0], data[1], data[2], data[3]);
+  }
+
+  Print(output);
 }
