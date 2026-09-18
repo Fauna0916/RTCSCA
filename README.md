@@ -13,3 +13,10 @@ Shared hardware details, embedded programming principles, report conventions, an
 - [Compiled Lab 1 report](Labs/Lab1/report/lab1_report.pdf)
 - [Hardware background](docs/hardware.md)
 - [Embedded programming principles](docs/embedded-principles.md)
+
+## Lab 2
+
+- [Task overview and connections](Labs/Lab2/README.md)
+- [STM32CubeMX project](Labs/Lab2/Firmware/Lab2/Lab2.ioc)
+- [Keil project](Labs/Lab2/Firmware/Lab2/MDK-ARM/Lab2.uvprojx)
+- [Compiled Lab 2 report](Labs/Lab2/report/Lab2_report.pdf)

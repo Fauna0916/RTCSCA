@@ -30,3 +30,27 @@ External interrupts capture asynchronous button events, while timer update inter
 
 Mechanical push-buttons produce several transitions around one press. A short time gate after an accepted edge is sufficient for this lab; a 30 ms interval suppresses the contact bounce while preserving normal button interaction.
 
+## Serial communication
+
+UART transfers text without a shared clock, so both endpoints use the same baud rate and frame format. USART2 is configured for 115200 bit/s, eight data bits, no parity, and one stop bit. Receiving one character per interrupt keeps the main loop available for application processing; a complete line is handed to the task state machine when a line terminator arrives.
+
+I2C uses a shared clock and a seven-bit slave address. STM32 HAL expects the address shifted left by one bit, so slave address `0x55` is supplied as `0x55 << 1`. Multi-byte integers are reconstructed in the byte order defined by the slave protocol.
+
+SPI transfers one received byte for every transmitted byte. A register-style slave may require one transfer to select a value and another transfer to clock that value back to the master. Chip select remains active for the complete register transaction.
+
+## PWM mapping
+
+For edge-aligned PWM, the output frequency and duty cycle are
+
+```text
+f_PWM = f_timer / ((PSC + 1) * (ARR + 1))
+duty  = CCR / (ARR + 1)
+```
+
+A 10-bit sample in the range 0 to 1023 can be mapped to a timer compare value with integer arithmetic:
+
+```text
+CCR = sample * (ARR + 1) / 1023
+```
+
+Servo control uses a 50 Hz period and a pulse width within the actuator's command range. With a 1 MHz timer counter, compare values correspond directly to pulse widths in microseconds.
