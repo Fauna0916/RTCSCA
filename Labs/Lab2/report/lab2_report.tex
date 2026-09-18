@@ -1,0 +1,228 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[a4paper,margin=23mm]{geometry}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont{DejaVu Sans Mono}[Scale=0.80]
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{pdfpages}
+\usepackage{tikz}
+\usepackage{titlesec}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!55!black]{hyperref}
+
+\input{metadata.tex}
+
+\definecolor{navy}{HTML}{173B57}
+\definecolor{blue}{HTML}{2F6F9F}
+\definecolor{orange}{HTML}{D66A1F}
+\definecolor{soft}{HTML}{F2F5F7}
+\definecolor{codegreen}{HTML}{39754A}
+
+\titleformat{\section}{\Large\bfseries\sffamily\color{navy}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\sffamily\color{blue}}{\thesubsection}{0.7em}{}
+\titlespacing*{\section}{0pt}{2.2ex plus 0.5ex}{1.0ex}
+\titlespacing*{\subsection}{0pt}{1.8ex plus 0.4ex}{0.7ex}
+
+\pagestyle{plain}
+
+\lstdefinestyle{cstyle}{
+  language=C,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{orange},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=7pt,
+  frame=single,
+  rulecolor=\color{black!15},
+  backgroundcolor=\color{soft},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  columns=fullflexible
+}
+\lstset{style=cstyle}
+
+\newtcolorbox{resultbox}[1]{
+  colback=blue!4,
+  colframe=blue!65!black,
+  boxrule=0.7pt,
+  arc=1.5mm,
+  title=\textbf{#1},
+  coltitle=white,
+  colbacktitle=blue!75!black
+}
+
+\begin{document}
+
+\includepdf[
+  pages=1,
+  pagecommand={
+    \thispagestyle{empty}
+    \begin{tikzpicture}[remember picture,overlay]
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=117mm]current page.south west) {\StudentName};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=109mm]current page.south west) {\UoGID};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=101mm]current page.south west) {\UESTCID};
+      \node[anchor=west,font=\sffamily\fontsize{11}{13}\selectfont]
+        at ([xshift=81mm,yshift=93mm]current page.south west) {\ReportDate};
+    \end{tikzpicture}
+  }
+]{../Lab2H-RTCSA_2026-2027.pdf}
+
+\setcounter{page}{1}
+
+\begin{abstract}
+This laboratory implements UART, I2C, and SPI communication together with pulse-width modulation. A UART-driven calculator receives three two-digit integers and reports either their sum or product. The STM32 then operates as an I2C master to control an Arduino LED interval and read either a two-byte analog sample or a four-byte character sequence. The same analog sample is acquired through SPI and mapped first to an LED duty cycle and then to a servo command pulse. The four tasks combine interrupt-driven terminal input, structured peripheral transactions, byte reconstruction, and timer compare control in one modular application.
+\end{abstract}
+
+\section{Introduction}
+
+Embedded systems commonly combine several communication interfaces because each protocol serves a different purpose. UART provides a direct text interface, I2C connects addressed devices on a two-wire bus, and SPI offers synchronous full-duplex transfers controlled by chip select. PWM converts numerical control values into timed output waveforms suitable for LED brightness and servo position control.
+
+The application is organised as a UART menu with a state machine. Received characters are assembled into complete lines by the USART2 interrupt callback, while the main loop parses commands and executes the selected task. I2C1 and SPI1 communicate with the supplied Arduino slave programs. TIM2 and TIM21 generate the two PWM outputs.
+
+\section{Task 1: UART Calculator}
+
+USART2 is configured for asynchronous communication at 115200 bit/s with eight data bits, no parity, and one stop bit. Reception is interrupt driven one byte at a time. When a carriage return or line feed is received, the completed line is processed by the application state machine.
+
+The first line contains three space-separated two-digit integers. The next input selects addition or multiplication. Listing~\ref{lst:task1} shows the parsing and arithmetic module. A 32-bit result is used so that the largest permitted product, $99^3=970299$, is represented directly.
+
+\lstinputlisting[caption={UART calculator parsing and arithmetic.},label={lst:task1}]{../Firmware/Lab2/Lab2/Src/task1_uart_calc.c}
+
+For the test data 12, 34, and 56, the two requested operations are
+
+\[
+12+34+56=102,
+\qquad
+12\times34\times56=22848.
+\]
+
+Figure~\ref{fig:task1-results} identifies the two serial-monitor result captures and the exact test sequence used for each case.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/task1_uart_results.pdf}
+  \caption{Task 1 serial-monitor result placeholders for addition and multiplication.}
+  \label{fig:task1-results}
+\end{figure}
+
+\section{Task 2: I2C Command and Data Selection}
+
+The STM32 is the I2C1 master and the Arduino is the slave at seven-bit address \texttt{0x55}. The first UART selection is converted to one of the commands \texttt{0x80}--\texttt{0x83}, which selects the Arduino LED interval. The second selection chooses register \texttt{0x00} or \texttt{0x01}.
+
+Register \texttt{0x00} returns a two-byte analog sample in little-endian order. If the received bytes are $b_0$ and $b_1$, the value is reconstructed as
+
+\[
+A=b_0+(b_1\ll 8).
+\]
+
+Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. Listing~\ref{lst:task2} implements the command write, register selection, read transaction, and data reconstruction.
+
+\lstinputlisting[caption={I2C command and data exchange.},label={lst:task2}]{../Firmware/Lab2/Lab2/Src/task2_i2c.c}
+
+\begin{resultbox}{I2C transaction sequence}
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Stage & Transferred value & Purpose \\
+\midrule
+Write 1 & \texttt{0x80}--\texttt{0x83} & Select LED interval \\
+Write 2 & \texttt{0x00} or \texttt{0x01} & Select slave data \\
+Read & 2 or 4 bytes & Acquire analog sample or text \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{resultbox}
+
+Figure~\ref{fig:task2-results} provides the two required serial-monitor capture locations. The example uses speed selection 2, which sends \texttt{0x82}; the left case reads register \texttt{0x00}, and the right case reads register \texttt{0x01}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/task2_i2c_results.pdf}
+  \caption{Task 2 serial-monitor result placeholders for the two-byte analog value and four-byte text.}
+  \label{fig:task2-results}
+\end{figure}
+
+\section{Task 3: SPI Analog Input to LED PWM}
+
+SPI1 operates as a mode-0, MSB-first master with a prescaler of 128. The \SI{32}{\mega\hertz} peripheral clock therefore produces
+
+\[
+f_{\mathrm{SCK}}=\frac{\SI{32}{\mega\hertz}}{128}=\SI{250}{\kilo\hertz}.
+\]
+
+The Arduino exposes the lower and upper ADC bytes through commands \texttt{0x00} and \texttt{0x01}. Each register read sends its command and then a dummy byte to generate the clocks for the reply. The two bytes are combined as a 16-bit value.
+
+TIM2 generates the LED waveform. With \texttt{PSC = 31} and \texttt{ARR = 999},
+
+\[
+f_{\mathrm{PWM}}=
+\frac{32\,000\,000}{(31+1)(999+1)}
+=\SI{1}{\kilo\hertz}.
+\]
+
+For a 10-bit Arduino sample $A\in[0,1023]$, the compare value is
+
+\[
+CCR_{\mathrm{LED}}=\left\lfloor\frac{1000A}{1023}\right\rfloor,
+\qquad
+D=100\frac{CCR_{\mathrm{LED}}}{1000}\ \%.
+\]
+
+Thus $A=0$ produces 0\%, $A=512$ produces approximately 50\%, and $A=1023$ produces 100\% duty cycle. The SPI transaction and LED mapping are shown together in Listing~\ref{lst:task34}.
+
+\section{Task 4: SPI Analog Input to Servo PWM}
+
+TIM21 generates the servo control waveform. The same prescaler gives a \SI{1}{\mega\hertz} counter, so one timer count represents \SI{1}{\micro\second}. With \texttt{ARR = 19999}, the PWM period is
+
+\[
+T_{\mathrm{servo}}=\frac{(31+1)(19999+1)}{32\,000\,000}
+=\SI{20}{\milli\second},
+\qquad f_{\mathrm{servo}}=\SI{50}{\hertz}.
+\]
+
+The analog input is mapped linearly to a pulse width from \SI{1000}{\micro\second} to \SI{2000}{\micro\second}:
+
+\[
+CCR_{\mathrm{servo}}
+=1000+\left\lfloor\frac{1000A}{1023}\right\rfloor.
+\]
+
+Under a nominal $0^\circ$--$180^\circ$ servo mapping, the corresponding command angle is
+
+\[
+\theta=\left\lfloor\frac{180A}{1023}\right\rfloor.
+\]
+
+The end points therefore command \SI{1000}{\micro\second} at $0^\circ$ and \SI{2000}{\micro\second} at $180^\circ$, while the midpoint is approximately \SI{1500}{\micro\second} at $90^\circ$.
+
+\lstinputlisting[caption={SPI analog acquisition and PWM mappings for Tasks 3 and 4.},label={lst:task34}]{../Firmware/Lab2/Lab2/Src/task34_spi_pwm.c}
+
+Figure~\ref{fig:pwm-mapping} shows both transfer functions. The LED duty cycle and servo pulse width increase monotonically across the complete 10-bit input range.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/task34_pwm_mapping.pdf}
+  \caption{ADC-to-PWM mappings used for LED brightness and servo position.}
+  \label{fig:pwm-mapping}
+\end{figure}
+
+\section{Conclusion}
+
+The laboratory integrated three serial interfaces with two timer-controlled outputs. Interrupt-driven UART reception supported a menu-based calculator and parameter entry. I2C transactions selected the Arduino LED interval and retrieved either a reconstructed analog value or the four-byte text response. SPI register transactions acquired the same 10-bit sample as two bytes. Linear timer mappings then converted this sample into a \SI{1}{\kilo\hertz} LED duty cycle and a \SI{50}{\hertz} servo pulse. The modular implementation separates terminal control, protocol exchange, and PWM conversion while retaining a single application flow for all four tasks.
+
+\end{document}
