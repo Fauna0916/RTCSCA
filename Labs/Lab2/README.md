@@ -17,7 +17,7 @@ Lab 2 implements four tasks in one STM32L073RZT6 firmware project:
 
 ## Serial interface
 
-Open the ST-LINK virtual COM port at 115200 bit/s, 8 data bits, no parity, and 1 stop bit. Send `1`, `2`, `3`, or `4` to select a task. Task 1 then accepts three two-digit integers followed by `+` or `*`. Task 2 accepts `<speed> <data>`: speed selections 0 to 3 send commands `0x80` to `0x83`, while data selections 0 and 1 request the analog value and `RTCA`, respectively. Send `M` to leave a continuously sampled SPI task.
+Enable the required `Task1()`, `Task2()`, `Task3()`, or `Task4()` call in `Firmware/Lab2/Src/main.c`. Open the ST-LINK virtual COM port at 115200 bit/s, 8 data bits, no parity, and 1 stop bit. Task 1 accepts three two-digit integers followed by `+` or `*`. Task 2 accepts `<speed> <data>`: speed selections 0 to 3 send commands `0x80` to `0x83`, while data selections 0 and 1 request the analog value and `RTCA`, respectively.
 
 ## Connections
 

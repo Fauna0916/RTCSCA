@@ -10,7 +10,6 @@
 \usepackage{amsmath}
 \usepackage{siunitx}
 \usepackage{xcolor}
-\usepackage{listings}
 \usepackage{caption}
 \usepackage{float}
 \usepackage{booktabs}
@@ -24,9 +23,6 @@
 
 \definecolor{navy}{HTML}{173B57}
 \definecolor{blue}{HTML}{2F6F9F}
-\definecolor{orange}{HTML}{D66A1F}
-\definecolor{soft}{HTML}{F2F5F7}
-\definecolor{codegreen}{HTML}{39754A}
 
 \titleformat{\section}{\Large\bfseries\sffamily\color{navy}}{\thesection}{0.7em}{}
 \titleformat{\subsection}{\large\bfseries\sffamily\color{blue}}{\thesubsection}{0.7em}{}
@@ -34,25 +30,6 @@
 \titlespacing*{\subsection}{0pt}{1.8ex plus 0.4ex}{0.7ex}
 
 \pagestyle{plain}
-
-\lstdefinestyle{cstyle}{
-  language=C,
-  basicstyle=\ttfamily\scriptsize,
-  keywordstyle=\color{blue}\bfseries,
-  commentstyle=\color{codegreen}\itshape,
-  stringstyle=\color{orange},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  numbersep=7pt,
-  frame=single,
-  rulecolor=\color{black!15},
-  backgroundcolor=\color{soft},
-  breaklines=true,
-  showstringspaces=false,
-  tabsize=2,
-  columns=fullflexible
-}
-\lstset{style=cstyle}
 
 \newtcolorbox{resultbox}[1]{
   colback=blue!4,
@@ -86,22 +63,20 @@
 \setcounter{page}{1}
 
 \begin{abstract}
-This laboratory implements UART, I2C, and SPI communication together with pulse-width modulation. A UART-driven calculator receives three two-digit integers and reports either their sum or product. The STM32 then operates as an I2C master to control an Arduino LED interval and read either a two-byte analog sample or a four-byte character sequence. The same analog sample is acquired through SPI and mapped first to an LED duty cycle and then to a servo command pulse. The four tasks combine interrupt-driven terminal input, structured peripheral transactions, byte reconstruction, and timer compare control in one modular application.
+This laboratory implements UART, I2C, and SPI communication together with pulse-width modulation. A UART-driven calculator receives three two-digit integers and reports either their sum or product. The STM32 then operates as an I2C master to control an Arduino LED interval and read either a two-byte analog sample or a four-byte character sequence. The same analog sample is acquired through SPI and mapped first to an LED duty cycle and then to a servo command pulse. The four tasks combine terminal input, peripheral transactions, byte reconstruction, and timer compare control in a modular application.
 \end{abstract}
 
 \section{Introduction}
 
 Embedded systems commonly combine several communication interfaces because each protocol serves a different purpose. UART provides a direct text interface, I2C connects addressed devices on a two-wire bus, and SPI offers synchronous full-duplex transfers controlled by chip select. PWM converts numerical control values into timed output waveforms suitable for LED brightness and servo position control.
 
-The application selects a task through UART and handles its input with a state machine. Received characters are assembled into complete lines by the USART2 interrupt callback, while the main loop parses commands and executes the selected task. I2C1 and SPI1 communicate with the supplied Arduino slave programs. TIM2 and TIM21 generate the two PWM outputs.
+Each task is implemented as a separate function called from the main loop. USART2 handles text input and output, while I2C1 and SPI1 communicate with the supplied Arduino slave programs. TIM2 and TIM21 generate the two PWM outputs.
 
 \section{Task 1: UART Calculator}
 
-USART2 is configured for asynchronous communication at 115200 bit/s with eight data bits, no parity, and one stop bit. Reception is interrupt driven one byte at a time. When a carriage return or line feed is received, the completed line is processed by the application state machine.
+USART2 is configured for asynchronous communication at 115200 bit/s with eight data bits, no parity, and one stop bit. The program reads each input line through UART before processing it.
 
-The first line contains three space-separated two-digit integers. The next input selects addition or multiplication. Listing~\ref{lst:task1} shows the parsing and arithmetic module. A 32-bit result is used so that the largest permitted product, $99^3=970299$, is represented directly.
-
-\lstinputlisting[caption={UART calculator parsing and arithmetic.},label={lst:task1}]{../Firmware/Lab2/Lab2/Src/task1_uart_calc.c}
+The first line contains three space-separated two-digit integers. The next input selects addition or multiplication. A 32-bit result represents the largest permitted product, $99^3=970299$, directly.
 
 For the test data 12, 34, and 56, the two requested operations are
 
@@ -132,7 +107,7 @@ Register \texttt{0x00} returns a two-byte analog sample in little-endian order. 
 A=b_0+(b_1\ll 8).
 \]
 
-Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. Listing~\ref{lst:task2} implements the command write, register selection, read transaction, and data reconstruction.
+Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. The master writes the interval command and register address before reading the selected data.
 
 Figure~\ref{fig:task2-results} shows speed selection 2, which sends \texttt{0x82}. Data selection 0 reads register \texttt{0x00}; data selection 1 reads register \texttt{0x01}.
 
@@ -144,8 +119,6 @@ Figure~\ref{fig:task2-results} shows speed selection 2, which sends \texttt{0x82
   \caption{Analog and text values displayed in the serial terminal.}
   \label{fig:task2-results}
 \end{figure}
-
-\lstinputlisting[caption={I2C command and data exchange.},label={lst:task2}]{../Firmware/Lab2/Lab2/Src/task2_i2c.c}
 
 \begin{resultbox}{I2C transaction sequence}
 \begin{center}
@@ -187,7 +160,7 @@ CCR_{\mathrm{LED}}=\left\lfloor\frac{1000A}{1023}\right\rfloor,
 D=100\frac{CCR_{\mathrm{LED}}}{1000}\ \%.
 \]
 
-Thus $A=0$ produces 0\%, $A=512$ produces approximately 50\%, and $A=1023$ produces 100\% duty cycle. The SPI transaction and LED mapping are shown together in Listing~\ref{lst:task34}.
+Thus $A=0$ produces 0\%, $A=512$ produces approximately 50\%, and $A=1023$ produces 100\% duty cycle.
 
 \section{Task 4: SPI Analog Input to Servo PWM}
 
@@ -214,8 +187,6 @@ Under a nominal $0^\circ$--$180^\circ$ servo mapping, the corresponding command 
 
 The end points therefore command \SI{1000}{\micro\second} at $0^\circ$ and \SI{2000}{\micro\second} at $180^\circ$, while the midpoint is approximately \SI{1500}{\micro\second} at $90^\circ$.
 
-\lstinputlisting[caption={SPI analog acquisition and PWM mappings for Tasks 3 and 4.},label={lst:task34}]{../Firmware/Lab2/Lab2/Src/task34_spi_pwm.c}
-
 Figure~\ref{fig:pwm-mapping} shows both transfer functions. The LED duty cycle and servo pulse width increase monotonically across the complete 10-bit input range.
 
 \begin{figure}[H]
@@ -227,6 +198,6 @@ Figure~\ref{fig:pwm-mapping} shows both transfer functions. The LED duty cycle a
 
 \section{Conclusion}
 
-The laboratory integrated three serial interfaces with two timer-controlled outputs. Interrupt-driven UART reception supported a calculator and parameter entry. I2C transactions selected the Arduino LED interval and retrieved either a reconstructed analog value or the four-byte text response. SPI register transactions acquired the same 10-bit sample as two bytes. Linear timer mappings then converted this sample into a \SI{1}{\kilo\hertz} LED duty cycle and a \SI{50}{\hertz} servo pulse. The modular implementation separates terminal control, protocol exchange, and PWM conversion while retaining a single application flow for all four tasks.
+The laboratory integrated three serial interfaces with two timer-controlled outputs. UART input supported the calculator and parameter entry. I2C transactions selected the Arduino LED interval and retrieved either a reconstructed analog value or the four-byte text response. SPI register transactions acquired the same 10-bit sample as two bytes. Linear timer mappings then converted this sample into a \SI{1}{\kilo\hertz} LED duty cycle and a \SI{50}{\hertz} servo pulse. The task functions separate terminal interaction, protocol exchange, and PWM conversion.
 
 \end{document}
