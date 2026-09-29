@@ -39,24 +39,18 @@ static void WriteText(const char *text)
   HAL_UART_Transmit(uart, (uint8_t *)text, (uint16_t)strlen(text), 100U);
 }
 
-static void ShowMenu(void)
+static void ReadyForTask(void)
 {
-  WriteText("\r\nLab 2 task menu\r\n"
-            "1 - UART calculator\r\n"
-            "2 - I2C Arduino exchange\r\n"
-            "3 - SPI analog value to LED PWM\r\n"
-            "4 - SPI analog value to servo PWM\r\n"
-            "Select task: ");
   state = APP_MENU;
 }
 
 static void HandleTask1Numbers(const char *line)
 {
   if (Task1_ParseNumbers(line, task1_values)) {
-    WriteText("Operation [A=add, M=multiply]: ");
+    WriteText("Operation (+/*): ");
     state = APP_TASK1_OPERATION;
   } else {
-    WriteText("Enter three 2-digit integers separated by spaces: ");
+    WriteText("Numbers: ");
   }
 }
 
@@ -66,14 +60,14 @@ static void HandleTask1Operation(const char *line)
   uint32_t result;
 
   if (!Task1_Calculate(task1_values, line[0], &result)) {
-    WriteText("Operation [A=add, M=multiply]: ");
+    WriteText("Operation (+/*): ");
     return;
   }
 
   snprintf(output, sizeof(output),
            "Result: %lu\r\n", (unsigned long)result);
   WriteText(output);
-  ShowMenu();
+  ReadyForTask();
 }
 
 static void HandleTask2(const char *line)
@@ -86,26 +80,24 @@ static void HandleTask2(const char *line)
 
   if ((sscanf(line, "%u %u", &speed, &data) != 2)
       || (speed > 3U) || (data > 1U)) {
-    WriteText("Enter speed 0..3 and data 0..1: ");
+    WriteText("Speed (0-3), data (0/1): ");
     return;
   }
 
   status = Task2_Exchange(i2c, (uint8_t)speed, (uint8_t)data, &result);
   if (status != HAL_OK) {
     snprintf(output, sizeof(output),
-             "I2C transaction failed (HAL status %u).\r\n",
+             "I2C error: %u\r\n",
              (unsigned int)status);
   } else if (data == 0U) {
     snprintf(output, sizeof(output),
-             "Command 0x%02X, register 0x00, analog value: %u\r\n",
-             (unsigned int)(0x80U + speed), result.analog_value);
+             "0x00: %u\r\n", result.analog_value);
   } else {
     snprintf(output, sizeof(output),
-             "Command 0x%02X, register 0x01, text: %s\r\n",
-             (unsigned int)(0x80U + speed), result.text);
+             "0x01: %s\r\n", result.text);
   }
   WriteText(output);
-  ShowMenu();
+  ReadyForTask();
 }
 
 static void HandleLine(const char *line)
@@ -113,7 +105,7 @@ static void HandleLine(const char *line)
   /* A completed UART line advances the selected task state. */
   if ((state == APP_TASK3_RUNNING) || (state == APP_TASK4_RUNNING)) {
     if ((line[0] == 'M') || (line[0] == 'm')) {
-      ShowMenu();
+      ReadyForTask();
     }
     return;
   }
@@ -121,21 +113,19 @@ static void HandleLine(const char *line)
   switch (state) {
     case APP_MENU:
       if (line[0] == '1') {
-        WriteText("Enter three 2-digit integers separated by spaces: ");
+        WriteText("Numbers: ");
         state = APP_TASK1_NUMBERS;
       } else if (line[0] == '2') {
-        WriteText("Enter speed 0..3 and data 0..1: ");
+        WriteText("Speed (0-3), data (0/1): ");
         state = APP_TASK2_INPUT;
       } else if (line[0] == '3') {
-        WriteText("Task 3 running; enter M to return to the menu.\r\n");
         state = APP_TASK3_RUNNING;
         last_sample_tick = 0U;
       } else if (line[0] == '4') {
-        WriteText("Task 4 running; enter M to return to the menu.\r\n");
         state = APP_TASK4_RUNNING;
         last_sample_tick = 0U;
       } else {
-        WriteText("Select task 1, 2, 3, or 4: ");
+        WriteText("Task 1-4: ");
       }
       break;
 
@@ -173,21 +163,21 @@ static void UpdateSpiTask(void)
   last_sample_tick = now;
 
   if (Task34_ReadAnalog(spi, &analog_value) != HAL_OK) {
-    WriteText("SPI transaction failed.\r\n");
+    WriteText("SPI error\r\n");
     return;
   }
 
   if (state == APP_TASK3_RUNNING) {
     mapped_value = Task3_SetLedDuty(tim_led, analog_value);
     snprintf(output, sizeof(output),
-             "ADC: %u, LED duty: %lu.%lu%%\r\n",
+             "ADC: %u, duty: %lu.%lu%%\r\n",
              analog_value,
              (unsigned long)(mapped_value / 10U),
              (unsigned long)(mapped_value % 10U));
   } else {
     mapped_value = Task4_SetServoPosition(tim_servo, analog_value);
     snprintf(output, sizeof(output),
-             "ADC: %u, servo pulse: %lu us, angle: %lu deg\r\n",
+             "ADC: %u, pulse: %lu us, angle: %lu deg\r\n",
              analog_value,
              (unsigned long)mapped_value,
              (unsigned long)(((uint32_t)analog_value * 180U) / 1023U));
@@ -213,7 +203,7 @@ void Lab2_AppInit(UART_HandleTypeDef *huart,
   __HAL_TIM_SET_COMPARE(tim_led, TIM_CHANNEL_1, 0U);
   __HAL_TIM_SET_COMPARE(tim_servo, TIM_CHANNEL_1, 1500U);
 
-  ShowMenu();
+  ReadyForTask();
   HAL_UART_Receive_IT(uart, &rx_byte, 1U);
 }
 
