@@ -93,7 +93,7 @@ This laboratory implements UART, I2C, and SPI communication together with pulse-
 
 Embedded systems commonly combine several communication interfaces because each protocol serves a different purpose. UART provides a direct text interface, I2C connects addressed devices on a two-wire bus, and SPI offers synchronous full-duplex transfers controlled by chip select. PWM converts numerical control values into timed output waveforms suitable for LED brightness and servo position control.
 
-The application is organised as a UART menu with a state machine. Received characters are assembled into complete lines by the USART2 interrupt callback, while the main loop parses commands and executes the selected task. I2C1 and SPI1 communicate with the supplied Arduino slave programs. TIM2 and TIM21 generate the two PWM outputs.
+The application selects a task through UART and handles its input with a state machine. Received characters are assembled into complete lines by the USART2 interrupt callback, while the main loop parses commands and executes the selected task. I2C1 and SPI1 communicate with the supplied Arduino slave programs. TIM2 and TIM21 generate the two PWM outputs.
 
 \section{Task 1: UART Calculator}
 
@@ -111,12 +111,14 @@ For the test data 12, 34, and 56, the two requested operations are
 12\times34\times56=22848.
 \]
 
-Figure~\ref{fig:task1-results} identifies the two serial-monitor result captures and the exact test sequence used for each case.
+Figure~\ref{fig:task1-results} shows the input and result for each arithmetic operation.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{figures/task1_uart_results.pdf}
-  \caption{Task 1 serial-monitor result placeholders for addition and multiplication.}
+  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task1_add.png}
+  \vspace{2mm}
+  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task1_multiply.png}
+  \caption{Calculator results displayed in the serial terminal.}
   \label{fig:task1-results}
 \end{figure}
 
@@ -131,6 +133,17 @@ A=b_0+(b_1\ll 8).
 \]
 
 Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. Listing~\ref{lst:task2} implements the command write, register selection, read transaction, and data reconstruction.
+
+Figure~\ref{fig:task2-results} shows speed selection 2, which sends \texttt{0x82}. Data selection 0 reads register \texttt{0x00}; data selection 1 reads register \texttt{0x01}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task2_analog.png}
+  \vspace{2mm}
+  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task2_text.png}
+  \caption{Analog and text values displayed in the serial terminal.}
+  \label{fig:task2-results}
+\end{figure}
 
 \lstinputlisting[caption={I2C command and data exchange.},label={lst:task2}]{../Firmware/Lab2/Lab2/Src/task2_i2c.c}
 
@@ -147,15 +160,6 @@ Read & 2 or 4 bytes & Acquire analog sample or text \\
 \end{tabular}
 \end{center}
 \end{resultbox}
-
-Figure~\ref{fig:task2-results} provides the two required serial-monitor capture locations. The example uses speed selection 2, which sends \texttt{0x82}; the left case reads register \texttt{0x00}, and the right case reads register \texttt{0x01}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{figures/task2_i2c_results.pdf}
-  \caption{Task 2 serial-monitor result placeholders for the two-byte analog value and four-byte text.}
-  \label{fig:task2-results}
-\end{figure}
 
 \section{Task 3: SPI Analog Input to LED PWM}
 
@@ -223,6 +227,6 @@ Figure~\ref{fig:pwm-mapping} shows both transfer functions. The LED duty cycle a
 
 \section{Conclusion}
 
-The laboratory integrated three serial interfaces with two timer-controlled outputs. Interrupt-driven UART reception supported a menu-based calculator and parameter entry. I2C transactions selected the Arduino LED interval and retrieved either a reconstructed analog value or the four-byte text response. SPI register transactions acquired the same 10-bit sample as two bytes. Linear timer mappings then converted this sample into a \SI{1}{\kilo\hertz} LED duty cycle and a \SI{50}{\hertz} servo pulse. The modular implementation separates terminal control, protocol exchange, and PWM conversion while retaining a single application flow for all four tasks.
+The laboratory integrated three serial interfaces with two timer-controlled outputs. Interrupt-driven UART reception supported a calculator and parameter entry. I2C transactions selected the Arduino LED interval and retrieved either a reconstructed analog value or the four-byte text response. SPI register transactions acquired the same 10-bit sample as two bytes. Linear timer mappings then converted this sample into a \SI{1}{\kilo\hertz} LED duty cycle and a \SI{50}{\hertz} servo pulse. The modular implementation separates terminal control, protocol exchange, and PWM conversion while retaining a single application flow for all four tasks.
 
 \end{document}
