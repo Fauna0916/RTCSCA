@@ -10,6 +10,7 @@
 \usepackage{amsmath}
 \usepackage{siunitx}
 \usepackage{xcolor}
+\usepackage{listings}
 \usepackage{caption}
 \usepackage{float}
 \usepackage{booktabs}
@@ -23,6 +24,9 @@
 
 \definecolor{navy}{HTML}{173B57}
 \definecolor{blue}{HTML}{2F6F9F}
+\definecolor{orange}{HTML}{D66A1F}
+\definecolor{soft}{HTML}{F2F5F7}
+\definecolor{codegreen}{HTML}{39754A}
 
 \titleformat{\section}{\Large\bfseries\sffamily\color{navy}}{\thesection}{0.7em}{}
 \titleformat{\subsection}{\large\bfseries\sffamily\color{blue}}{\thesubsection}{0.7em}{}
@@ -30,6 +34,25 @@
 \titlespacing*{\subsection}{0pt}{1.8ex plus 0.4ex}{0.7ex}
 
 \pagestyle{plain}
+
+\lstdefinestyle{cstyle}{
+  language=C,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{orange},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=7pt,
+  frame=single,
+  rulecolor=\color{black!15},
+  backgroundcolor=\color{soft},
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2,
+  columns=fullflexible
+}
+\lstset{style=cstyle}
 
 \newtcolorbox{resultbox}[1]{
   colback=blue!4,
@@ -76,7 +99,9 @@ Each task is implemented as a separate function called from the main loop. USART
 
 USART2 is configured for asynchronous communication at 115200 bit/s with eight data bits, no parity, and one stop bit. The program reads each input line through UART before processing it.
 
-The first line contains three space-separated two-digit integers. The next input selects addition or multiplication. A 32-bit result represents the largest permitted product, $99^3=970299$, directly.
+The first line contains three space-separated two-digit integers. The next input selects addition or multiplication. Listing~\ref{lst:task1} shows the UART input and arithmetic functions. A 32-bit result represents the largest permitted product, $99^3=970299$, directly.
+
+\lstinputlisting[caption={UART calculator input and arithmetic.},label={lst:task1}]{../Firmware/Lab2/Lab2/Src/task1.c}
 
 For the test data 12, 34, and 56, the two requested operations are
 
@@ -90,9 +115,9 @@ Figure~\ref{fig:task1-results} shows the input and result for each arithmetic op
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task1_add.png}
+  \fcolorbox{black!15}{white}{\includegraphics[width=0.56\textwidth]{figures/serialdebug_task1_add.png}}
   \vspace{2mm}
-  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task1_multiply.png}
+  \fcolorbox{black!15}{white}{\includegraphics[width=0.56\textwidth]{figures/serialdebug_task1_multiply.png}}
   \caption{Calculator results displayed in the serial terminal.}
   \label{fig:task1-results}
 \end{figure}
@@ -107,18 +132,9 @@ Register \texttt{0x00} returns a two-byte analog sample in little-endian order. 
 A=b_0+(b_1\ll 8).
 \]
 
-Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. The master writes the interval command and register address before reading the selected data.
+Register \texttt{0x01} returns the four ASCII bytes \texttt{RTCA}. Listing~\ref{lst:task2} shows the command write, register selection, read transaction, and data reconstruction.
 
-Figure~\ref{fig:task2-results} shows speed selection 2, which sends \texttt{0x82}. Data selection 0 reads register \texttt{0x00}; data selection 1 reads register \texttt{0x01}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task2_analog.png}
-  \vspace{2mm}
-  \includegraphics[width=0.94\textwidth]{figures/serialdebug_task2_text.png}
-  \caption{Analog and text values displayed in the serial terminal.}
-  \label{fig:task2-results}
-\end{figure}
+\lstinputlisting[caption={I2C command and data exchange.},label={lst:task2}]{../Firmware/Lab2/Lab2/Src/task2.c}
 
 \begin{resultbox}{I2C transaction sequence}
 \begin{center}
@@ -133,6 +149,17 @@ Read & 2 or 4 bytes & Acquire analog sample or text \\
 \end{tabular}
 \end{center}
 \end{resultbox}
+
+Figure~\ref{fig:task2-results} shows speed selection 2, which sends \texttt{0x82}. Data selection 0 reads register \texttt{0x00}; data selection 1 reads register \texttt{0x01}.
+
+\begin{figure}[H]
+  \centering
+  \fcolorbox{black!15}{white}{\includegraphics[width=0.56\textwidth]{figures/serialdebug_task2_analog.png}}
+  \vspace{2mm}
+  \fcolorbox{black!15}{white}{\includegraphics[width=0.56\textwidth]{figures/serialdebug_task2_text.png}}
+  \caption{Analog and text values displayed in the serial terminal.}
+  \label{fig:task2-results}
+\end{figure}
 
 \section{Task 3: SPI Analog Input to LED PWM}
 
@@ -160,7 +187,7 @@ CCR_{\mathrm{LED}}=\left\lfloor\frac{1000A}{1023}\right\rfloor,
 D=100\frac{CCR_{\mathrm{LED}}}{1000}\ \%.
 \]
 
-Thus $A=0$ produces 0\%, $A=512$ produces approximately 50\%, and $A=1023$ produces 100\% duty cycle.
+Thus $A=0$ produces 0\%, $A=512$ produces approximately 50\%, and $A=1023$ produces 100\% duty cycle. The SPI transaction and LED mapping are shown together in Listing~\ref{lst:task34}.
 
 \section{Task 4: SPI Analog Input to Servo PWM}
 
@@ -186,6 +213,8 @@ Under a nominal $0^\circ$--$180^\circ$ servo mapping, the corresponding command 
 \]
 
 The end points therefore command \SI{1000}{\micro\second} at $0^\circ$ and \SI{2000}{\micro\second} at $180^\circ$, while the midpoint is approximately \SI{1500}{\micro\second} at $90^\circ$.
+
+\lstinputlisting[caption={SPI analog acquisition and PWM mappings for Tasks 3 and 4.},label={lst:task34}]{../Firmware/Lab2/Lab2/Src/task34.c}
 
 Figure~\ref{fig:pwm-mapping} shows both transfer functions. The LED duty cycle and servo pulse width increase monotonically across the complete 10-bit input range.
 
