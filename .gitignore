@@ -9,6 +9,17 @@ tmp/
 **/MDK-ARM/Lab[0-9]*/
 **/*.dep
 **/*.lst
+**/.mxproject
+
+# CMSIS modules outside the Cortex-M firmware dependency set
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/Core/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/Core_A/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/docs/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/DSP/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/Lib/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/NN/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/RTOS/
+Labs/Lab3/Firmware/Lab3/Drivers/CMSIS/RTOS2/
 
 # LaTeX intermediate files
 **/report/build/

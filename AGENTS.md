@@ -6,14 +6,15 @@ This repository contains independent course laboratory projects for Real-Time Co
 
 ## Hardware and toolchain
 
-- Target microcontroller: STM32L073RZT6 with a 32 MHz Arm Cortex-M0+ core, 192 KB ECC Flash, 20 KB RAM, and 6 KB ECC EEPROM.
-- Development board: NUCLEO-L073RZ.
+- Labs 1 and 2: NUCLEO-L073RZ with STM32L073RZT6, a 32 MHz Arm Cortex-M0+ core, 192 KB ECC Flash, 20 KB RAM, and 6 KB ECC EEPROM.
+- Lab 3: NUCLEO-F103RB with STM32F103RBT6, a Cortex-M3 core configured at 64 MHz, 128 KB Flash, and 20 KB RAM.
 - User LED: LD2 on PA5, push-pull output, active high.
 - User button: B1 on PC13, configured for a falling-edge external interrupt when interrupts are required.
 - Debug interface: ST-LINK over PA13/PA14 SWD.
-- System clock: 32 MHz, generated from HSI16 through the PLL; AHB, APB1, and APB2 use a divider of one.
+- L073 system clock: HSI16 through the PLL at 32 MHz; AHB, APB1, and APB2 use a divider of one.
+- F103 system clock: HSI8 divided by 2 and multiplied by 16 at 64 MHz; AHB and APB2 use a divider of one, APB1 uses a divider of two.
 - Project tools: STM32CubeMX and Keil MDK-ARM 5, including the VS Code Keil extension where convenient.
-- Firmware libraries: STM32CubeL0 HAL and CMSIS.
+- Firmware libraries: STM32CubeL0 or STM32CubeF1 HAL and CMSIS; Lab 3 uses CMSIS-RTOS2 with FreeRTOS.
 
 Detailed reference material is maintained in `docs/hardware.md` and `docs/embedded-principles.md`.
 

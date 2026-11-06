@@ -2,7 +2,7 @@
 
 ## Microcontroller
 
-The projects target the STM32L073RZT6, an ultra-low-power STM32L0 microcontroller built around a 32 MHz Arm Cortex-M0+ core. The device provides 192 KB of ECC-protected Flash memory, 20 KB of RAM, and 6 KB of ECC-protected data EEPROM.
+Labs 1 and 2 target the STM32L073RZT6, an STM32L0 microcontroller with a 32 MHz Arm Cortex-M0+ core, 192 KB of ECC-protected Flash memory, 20 KB of RAM, and 6 KB of ECC-protected data EEPROM. Lab 3 uses the connected NUCLEO-F103RB, whose STM32F103RBT6 has a Cortex-M3 core, 128 KB Flash, and 20 KB RAM.
 
 ## Lab 1 board mapping
 
@@ -36,8 +36,25 @@ Lab 2 uses the NUCLEO-L073RZ as the communication master and an Arduino Nano Eve
 
 The Arduino I2C slave address is `0x55`. Both boards share a common ground. The I2C bus uses pull-up resistors on SDA and SCL.
 
+## Lab 3 board mapping
+
+| Function | MCU signal | Configuration |
+|---|---|---|
+| User LED | PA5, LD2 | Push-pull output, active high |
+| User button | PC13, B1 | Active low, falling-edge EXTI15_10 |
+| Serial transmit / receive | PA2 / PA3, USART2 | ST-LINK virtual COM port, 115200 bit/s, 8N1 |
+| RTOS tick | SysTick | 1 kHz |
+| HAL tick | TIM4 | 1 kHz |
+| Debug | PA13 / PA14 | ST-LINK SWD |
+
+The HSI oscillator supplies 8 MHz. The PLL divides it by two and multiplies by sixteen to produce 64 MHz. HCLK and PCLK2 are 64 MHz; PCLK1 is 32 MHz. The APB1 timer clock is 64 MHz because the APB1 divider is two. TIM4 uses a prescaler of 63 and an auto-reload value of 999.
+
+SVC has interrupt priority 0; PendSV and SysTick use 15. EXTI15_10 and USART2 use priority 5, matching the FreeRTOS maximum system-call interrupt priority. TIM4 uses priority 0 and updates the HAL tick.
+
+The connected ST-LINK exposes COM6 on this workstation. STM32CubeF1 V1.8.5 supplies the HAL, FreeRTOS, and CMSIS-RTOS2 wrapper. Keil uses Arm Compiler 5.06 update 7 and STM32F1xx_DFP 2.4.1.
+
 ## Development tools
 
 - STM32CubeMX for pin, clock, interrupt, and peripheral configuration
 - Keil MDK-ARM 5 for compilation and debugging
-- STM32CubeL0 HAL and CMSIS device support
+- STM32CubeL0 and STM32CubeF1 HAL and CMSIS device support
