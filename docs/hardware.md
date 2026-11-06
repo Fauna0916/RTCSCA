@@ -51,6 +51,8 @@ The HSI oscillator supplies 8 MHz. The PLL divides it by two and multiplies by s
 
 SVC has interrupt priority 0; PendSV and SysTick use 15. EXTI15_10 and USART2 use priority 5, matching the FreeRTOS maximum system-call interrupt priority. TIM4 uses priority 0 and updates the HAL tick.
 
+![CubeMX SYS configuration with TIM4 as the HAL time base](figures/f103_hal_timebase.png)
+
 The connected ST-LINK exposes COM6 on this workstation. STM32CubeF1 V1.8.5 supplies the HAL, FreeRTOS, and CMSIS-RTOS2 wrapper. Keil uses Arm Compiler 5.06 update 7 and STM32F1xx_DFP 2.4.1.
 
 ## Development tools
