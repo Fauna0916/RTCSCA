@@ -28,3 +28,11 @@ Shared hardware details, embedded programming principles, report conventions, an
 - [Keil project with Task1 and Task2 targets](Labs/Lab3/Firmware/Lab3/MDK-ARM/Lab3.uvprojx)
 - [Compiled Lab 3 report](Labs/Lab3/report/Lab3_report.pdf)
 - [LaTeX source](Labs/Lab3/report/main.tex)
+
+## Lab 4
+
+- [Task overview](Labs/Lab4/README.md)
+- [STM32CubeMX project](Labs/Lab4/Firmware/Lab4/Lab4.ioc)
+- [Keil project](Labs/Lab4/Firmware/Lab4/MDK-ARM/Lab4.uvprojx)
+- [Compiled Lab 4 report](Labs/Lab4/report/Lab4_report.pdf)
+- [LaTeX source](Labs/Lab4/report/main.tex)
