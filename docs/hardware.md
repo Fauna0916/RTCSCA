@@ -2,7 +2,7 @@
 
 ## Microcontroller
 
-Labs 1 and 2 target the STM32L073RZT6, an STM32L0 microcontroller with a 32 MHz Arm Cortex-M0+ core, 192 KB of ECC-protected Flash memory, 20 KB of RAM, and 6 KB of ECC-protected data EEPROM. Lab 3 uses the connected NUCLEO-F103RB, whose STM32F103RBT6 has a Cortex-M3 core, 128 KB Flash, and 20 KB RAM.
+Labs 1 and 2 target the STM32L073RZT6, an STM32L0 microcontroller with a 32 MHz Arm Cortex-M0+ core, 192 KB of ECC-protected Flash memory, 20 KB of RAM, and 6 KB of ECC-protected data EEPROM. Labs 3 and 4 use the NUCLEO-F103RB, whose STM32F103RBT6 has a Cortex-M3 core, 128 KB Flash, and 20 KB RAM.
 
 ## Lab 1 board mapping
 
@@ -54,6 +54,12 @@ SVC has interrupt priority 0; PendSV and SysTick use 15. EXTI15_10 and USART2 us
 ![CubeMX SYS configuration with TIM4 as the HAL time base](figures/f103_hal_timebase.png)
 
 The connected ST-LINK exposes COM6 on this workstation. STM32CubeF1 V1.8.5 supplies the HAL, FreeRTOS, and CMSIS-RTOS2 wrapper. Keil uses Arm Compiler 5.06 update 7 and STM32F1xx_DFP 2.4.1.
+
+## Lab 4 configuration
+
+Lab 4 uses the same F103 clock, USART2 pin mapping, SysTick, and TIM4 configuration. Its three counter tasks share a mutex and transmit through USART2 using blocking HAL calls. PC13 is a GPIO input. The RTOS tasks have Normal priority and 1024-byte stacks.
+
+CubeMX defines `Counter1`, `Counter2`, and `Counter3` with the external entry function `CounterTask` and arguments 1, 2, and 3. It creates `counterMutex` before these tasks. Application code is in `Lab4/Inc` and `Lab4/Src` inside the firmware project. SVC priority 0 is set in the initialization user-code region, and the interrupt source supplies the FreeRTOS SysTick handler.
 
 ## Development tools
 

@@ -64,3 +64,11 @@ CMSIS-RTOS2 `osThreadAttr_t.stack_size` is expressed in bytes. A local array of 
 For the Cortex-M3 FreeRTOS port, SVC starts the first task at priority 0. PendSV and SysTick run at the lowest interrupt priority. Interrupts that call RTOS APIs use a numerical priority at or above `configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY`. Use SysTick for the RTOS and a separate hardware timer for the HAL tick.
 
 Lab 3 supplies `SysTick_Handler` in the interrupt source to call `xPortSysTickHandler`. Its two application threads are created in `Task1_Start` or `Task2_Start`; the Keil target selects the implementation through `LAB3_TASK`.
+
+## Mutexes and semaphores
+
+A mutex gives one task ownership of a critical section. Place the complete read-modify-write operation between acquisition and release. When a UART line describes that update, keeping its transmission inside the same section preserves the order of the displayed values. A zero timeout requests the mutex once; the task performs the operation when the returned status is `osOK`. Periodic delays follow the release.
+
+A semaphore counts tokens without assigning an owner. A binary semaphore can transfer a completion event from an interrupt to a waiting task. Create it with maximum count one and initial count zero, then release it in the peripheral completion callback. The task acquires the token and processes the completed transfer. A counting semaphore represents several available resources or pending events. FreeRTOS mutexes support priority inheritance, while semaphores have no owner to inherit a waiting task's priority.
+
+API details are maintained in the [Arm CMSIS-RTOS2 mutex documentation](https://arm-software.github.io/CMSIS_6/latest/RTOS2/group__CMSIS__RTOS__MutexMgmt.html) and [semaphore documentation](https://arm-software.github.io/CMSIS_6/latest/RTOS2/group__CMSIS__RTOS__SemaphoreMgmt.html).
