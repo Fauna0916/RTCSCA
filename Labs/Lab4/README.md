@@ -15,4 +15,6 @@ Build the selected target and download through ST-LINK. The targets define `LAB4
 
 Hardware testing recorded 30 consecutive counter values, from 33 to 62, in 15 seconds. Tasks 1, 2, and 3 contributed 8, 7, and 15 updates, respectively. The recording is in `report/data/task1_uart.txt`, and the report includes a live serial-terminal screenshot.
 
+Task 2 testing recorded 255 buffer accesses in 15 seconds: 143 writes and 112 reads across the three readers. The reported occupancy was one for 139 accesses and two for 116 accesses. The recording is in `report/data/task2_uart.txt`.
+
 For Task 1, the source implementation is selected over CubeMX's weak entry function by the linker. The startup selection is inside CubeMX user-code regions. Shared hardware and RTOS details are maintained in the repository-level `docs` directory.
