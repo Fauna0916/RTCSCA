@@ -33,6 +33,6 @@ Shared hardware details, embedded programming principles, report conventions, an
 
 - [Task overview](Labs/Lab4/README.md)
 - [STM32CubeMX project](Labs/Lab4/Firmware/Lab4/Lab4.ioc)
-- [Keil project](Labs/Lab4/Firmware/Lab4/MDK-ARM/Lab4.uvprojx)
+- [Keil project with Task1 and Task2 targets](Labs/Lab4/Firmware/Lab4/MDK-ARM/Lab4.uvprojx)
 - [Compiled Lab 4 report](Labs/Lab4/report/Lab4_report.pdf)
 - [LaTeX source](Labs/Lab4/report/main.tex)

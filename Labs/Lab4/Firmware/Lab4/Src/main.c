@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lab4.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -120,7 +120,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+#if LAB4_TASK == 1
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -156,7 +156,10 @@ int main(void)
   Counter3Handle = osThreadNew(CounterTask, (void *)3, &Counter3_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
+#else
+  osKernelInitialize();
+  Task2_Start();
+#endif
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */

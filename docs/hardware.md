@@ -57,9 +57,11 @@ The connected ST-LINK exposes COM6 on this workstation. STM32CubeF1 V1.8.5 suppl
 
 ## Lab 4 configuration
 
-Lab 4 uses the same F103 clock, USART2 pin mapping, SysTick, and TIM4 configuration. Its three counter tasks share a mutex and transmit through USART2 using blocking HAL calls. PC13 is a GPIO input. The RTOS tasks have Normal priority and 1024-byte stacks.
+Lab 4 uses the same F103 clock, USART2 pin mapping, SysTick, and TIM4 configuration. Task 1's three counter tasks share a mutex and transmit through USART2 using blocking HAL calls. Task 2 uses one writer, three readers, a counting semaphore with two permits, and a mutex for UART transmission. PC13 is a GPIO input. The RTOS tasks have Normal priority and 1024-byte stacks.
 
 CubeMX defines `Counter1`, `Counter2`, and `Counter3` with the external entry function `CounterTask` and arguments 1, 2, and 3. It creates `counterMutex` before these tasks. Application code is in `Lab4/Inc` and `Lab4/Src` inside the firmware project. SVC priority 0 is set in the initialization user-code region, and the interrupt source supplies the FreeRTOS SysTick handler.
+
+The Keil `Task1` and `Task2` targets select the startup path through `LAB4_TASK`. `Task2_Start()` creates the four buffer tasks and their synchronization objects. Both applications retain the zero-timeout acquisition used in the laboratory examples.
 
 ## Development tools
 
