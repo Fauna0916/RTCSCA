@@ -13,4 +13,6 @@ Task 2 presents the differences between mutexes and semaphores and explains inte
 
 Build the `Lab4` target and download through ST-LINK. Open its virtual COM port at 115200 bit/s, 8 data bits, no parity, and 1 stop bit. The application starts printing counter updates after reset. All three tasks use the same entry function with different task identifiers.
 
+Hardware testing recorded 30 consecutive counter values, from 33 to 62, in 15 seconds. Tasks 1, 2, and 3 contributed 8, 7, and 15 updates, respectively. The recording is in `report/data/task1_uart.txt`, and the report includes a live serial-terminal screenshot.
+
 The source implementation is selected over CubeMX's weak entry function by the linker. Shared hardware and RTOS details are maintained in the repository-level `docs` directory.
