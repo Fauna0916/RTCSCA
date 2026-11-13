@@ -18,3 +18,5 @@ python Labs/Lab3/scripts/measure_hardware.py --port COM6
 ```
 
 It uses pyserial, pyocd, and pyelftools. Results are stored in `report/data`; `report/generate_figures.py` creates the plots used by the LaTeX report. Shared hardware and RTOS details are maintained in the repository's `docs` directory.
+
+Task 1 photographs are in `imgs/orginal.jpg` (B1 released, LD2 off) and `imgs/pressed.jpg` (B1 pressed, LD2 on). The report includes both photographs alongside the UART notifications. Task 2 results include command echo, queue values, measured LED intervals, and stack usage.

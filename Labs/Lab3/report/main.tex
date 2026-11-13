@@ -16,6 +16,7 @@
 \usepackage{tikz}
 \usepackage{titlesec}
 \usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!55!black]{hyperref}
+\pdfminorversion=7
 
 \definecolor{navy}{HTML}{173B57}
 \definecolor{blue}{HTML}{2F6F9F}
@@ -38,6 +39,7 @@
 \lstset{style=cstyle}
 
 \begin{document}
+\hypersetup{pageanchor=false}
 \includepdf[pages=1,pagecommand={
   \thispagestyle{empty}
   \begin{tikzpicture}[remember picture,overlay]
@@ -51,6 +53,7 @@
   \end{tikzpicture}
 }]{../LAB 3.pdf}
 \setcounter{page}{1}
+\hypersetup{pageanchor=true}
 
 \begin{abstract}
 This laboratory implements task scheduling, inter-task communication, and stack allocation using CMSIS-RTOS2. The first application assigns a higher priority to a button-controlled brake indicator than to its UART notification. The second application uses two tasks and three queues to process eleven-character commands, control an LED, count toggles, and report the maximum of 150 random integers. Hardware tests confirmed the button response, command echo, and queue updates. Mean LED toggle intervals were 1006.0, 502.9, and 251.4 ms for commands of 1000, 500, and 250 ms, respectively.
@@ -77,7 +80,26 @@ Message & Normal & 768 & Transmit the notification \\
 
 Brake actuation has higher priority because it is the immediate response to the slowdown signal. The LED is set before the UART task is notified. Once the brake task blocks during its release check, the message task can transmit. Both tasks wait on flags between events.
 
-The hardware test showed LD2 illuminated while B1 was held and extinguished after release. Figure~\ref{fig:task1-uart} shows the UART messages received during repeated presses.
+\clearpage
+\subsection{Hardware Results}
+Figure~\ref{fig:task1-board} shows the board with B1 released and pressed. The green LD2 is off with the button released and on while B1 is held, demonstrating the brake indication. Figure~\ref{fig:task1-uart} shows the UART messages received during repeated presses.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../imgs/orginal.jpg}\\[1mm]
+\small (a) B1 released: LD2 off
+\end{minipage}\hfill
+\begin{minipage}[t]{0.47\textwidth}
+\centering
+\includegraphics[width=\linewidth]{../imgs/pressed.jpg}\\[1mm]
+\small (b) B1 pressed: LD2 on
+\end{minipage}
+\caption{Physical brake-indicator response to the user button.}
+\label{fig:task1-board}
+\end{figure}
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.62\textwidth]{figures/task1_uart.png}

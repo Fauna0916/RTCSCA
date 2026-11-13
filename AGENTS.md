@@ -4,6 +4,8 @@
 
 This repository contains independent course laboratory projects for Real-Time Computer Systems and Computer Architecture. Implement the requested tasks directly and follow any task-specific method stated in the laboratory brief. Explanatory teaching material in a brief is background rather than an additional deliverable.
 
+Check task statements throughout the brief, including practical implementation requirements embedded in surrounding explanatory text. Match each required behavior to application code and its report results.
+
 ## Hardware and toolchain
 
 - Labs 1 and 2: NUCLEO-L073RZ with STM32L073RZT6, a 32 MHz Arm Cortex-M0+ core, 192 KB ECC Flash, 20 KB RAM, and 6 KB ECC EEPROM.
