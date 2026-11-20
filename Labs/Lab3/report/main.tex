@@ -56,11 +56,11 @@
 \hypersetup{pageanchor=true}
 
 \begin{abstract}
-This laboratory implements task scheduling, inter-task communication, and stack allocation using CMSIS-RTOS2. The first application assigns a higher priority to a button-controlled brake indicator than to its UART notification. The second application uses two tasks and three queues to process eleven-character commands, control an LED, count toggles, and report the maximum of 150 random integers. Hardware tests confirmed the button response, command echo, and queue updates. Mean LED toggle intervals were 1006.0, 502.9, and 251.4 ms for commands of 1000, 500, and 250 ms, respectively.
+An RTOS application must schedule urgent responses while exchanging data between tasks. This laboratory implements a brake indicator with a higher priority than its UART notification and an LED controller that exchanges commands and results through three queues. Hardware tests confirmed the button response and command-driven timing. Measured toggle intervals followed the requested 4:2:1 ratio and were approximately 0.6\% above the nominal delays. A 1536-byte stack accommodated the 150-integer local array, with 192 bytes unused at the maximum observed stack use.
 \end{abstract}
 
 \section{Introduction}
-An RTOS schedules concurrent tasks according to their priorities and ready states. Thread flags communicate events, while message queues transfer values between tasks. Each task also requires a stack sized for its local data and function calls. These mechanisms are examined through a brake indication task and a UART-controlled LED task. The RTOS tick is 1 ms, and TIM4 provides a separate HAL time base.
+Real-time control combines actions with different priorities and execution times. A brake indicator should respond before its status message, while serial reception must pass new timing commands to an LED task. The first application uses priority scheduling and thread flags to coordinate the brake response and notification. The second uses queues to transfer commands and results between two tasks. Its 150-element local array also makes stack allocation part of the implementation, linking the task's memory requirements to measured stack use.
 
 \section{Task 1: Brake Indication and UART Notification}
 Pressing B1 generates a falling-edge interrupt. The callback applies a 30 ms debounce interval and sets the brake task's thread flag. The brake task switches LD2 on, then signals the message task to transmit \texttt{Car is slowing down}. It checks for button release every 10 ms and switches LD2 off when B1 is released.
@@ -78,7 +78,7 @@ Message & Normal & 768 & Transmit the notification \\
 \end{tabular}
 \end{table}
 
-Brake actuation has higher priority because it is the immediate response to the slowdown signal. The LED is set before the UART task is notified. Once the brake task blocks during its release check, the message task can transmit. Both tasks wait on flags between events.
+Brake actuation has High priority because it is the immediate response to the slowdown signal. The message task has Normal priority and runs when the brake task blocks between button-release checks. This combines prompt actuation with an opportunity for UART transmission. Both tasks wait on flags between events.
 
 \clearpage
 \subsection{Hardware Results}
@@ -186,5 +186,5 @@ PA5 output states were sampled through ST-LINK while the application ran. Twelve
 The mean interval scales with the requested delay and is approximately 0.6\% above the nominal value in each case. A complete on/off cycle contains two toggles, so its period is $2T$. The counter is updated every ten toggles, corresponding to nominal update periods of 10, 5, and 2.5 s for the three commands.
 
 \section{Conclusion}
-The first task demonstrated priority-based response by applying the brake indicator before issuing its UART notification. The second task combined interrupt-driven reception with three queues to control LED timing and report counter and array results. Hardware output confirmed command parsing and queue communication, while measured intervals followed the requested 4:2:1 ratio. Allocating 1536 bytes to the LED task accommodated the 600-byte local array and its execution stack.
+The applications show how task readiness and priority jointly determine RTOS behaviour. The brake task acts first, then its blocking wait allows UART notification to proceed. Queue communication connects command reception to LED control. The measured 4:2:1 interval ratio shows that new commands set the toggle schedule. The measured 192 bytes of unused LED task stack confirm that the 1536-byte allocation accommodated the 150-integer array and the task's execution stack.
 \end{document}

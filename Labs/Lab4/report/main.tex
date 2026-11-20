@@ -58,15 +58,15 @@
 \hypersetup{pageanchor=true}
 
 \begin{abstract}
-This laboratory examines mutual exclusion, counting semaphores, and event synchronisation in a real-time operating system. Three tasks use a mutex to protect a shared counter. A second application uses four tasks and a counting semaphore to admit at most two tasks to a shared buffer. Hardware tests recorded 30 consecutive counter updates and 255 buffer accesses, including accesses with both semaphore permits occupied. A comparison of the two primitives also identifies interrupt-to-task notification as a suitable application of a binary semaphore.
+Tasks sharing a resource require a synchronisation mechanism that matches the permitted access. This laboratory compares exclusive access through a mutex with access limited to two tasks through a counting semaphore. Hardware tests recorded 30 consecutive counter updates in the mutex application. The four-task semaphore application recorded 255 buffer accesses, with both permits occupied in 45.5\% of the reported accesses. UART receive completion provides a further use case for signalling from an interrupt with a binary semaphore.
 \end{abstract}
 
 \section{Introduction}
-Updating a shared variable can involve separate read, modify, and write operations. A task switch between these operations allows another task to read an outdated value, so an increment can be lost. A mutex serialises the update. A counting semaphore limits how many tasks can hold access permits, while a binary semaphore can signal an event. The applications examine these mechanisms through a shared counter, a shared buffer, and an interrupt-driven notification example.
+The required access pattern determines how tasks should synchronise. A shared counter needs each read-modify-write sequence to complete before another task updates the value. A buffer that admits two tasks instead needs a limit on the number of tasks holding access permits. The first application uses a mutex to preserve counter updates, and the second uses a counting semaphore to enforce the two-task limit. An interrupt-driven notification example extends the comparison to event signalling, where a binary semaphore connects completion of an operation to task execution.
 
 \section{Task 1: Three Tasks Sharing a Mutex}
 \subsection{Task Configuration}
-Three tasks, \texttt{Counter1}, \texttt{Counter2}, and \texttt{Counter3}, execute the same \texttt{CounterTask} function. Their arguments identify them as tasks 1, 2, and 3. Each uses Normal priority and a 256-word stack, equivalent to 1024 bytes. Figure~\ref{fig:configuration} shows the three entries in the task configuration.
+The three tasks share \texttt{CounterTask}, with identifiers 1--3 passed as arguments (Figure~\ref{fig:configuration}). Each uses Normal priority and a 256-word (1024-byte) stack.
 
 \begin{figure}[H]
 \centering
@@ -76,7 +76,7 @@ Three tasks, \texttt{Counter1}, \texttt{Counter2}, and \texttt{Counter3}, execut
 \end{figure}
 
 \subsection{Counter Behaviour}
-Starting from zero, each successful critical section adds one to the shared counter. Thus, after $N$ successful updates, the counter is $N$ and the printed values follow $1,2,\ldots,N$. Figure~\ref{fig:mutex} contrasts a possible lost update with serialised access. The scheduler determines which task acquires the mutex; the displayed task identifiers follow that acquisition order.
+Each successful acquisition increments the counter once and transmits its updated value within the same critical section. Task identifiers follow the acquisition order. Figure~\ref{fig:mutex} contrasts serialised access with an interleaving that loses increments.
 
 \begin{figure}[H]
 \centering
@@ -87,7 +87,7 @@ Starting from zero, each successful critical section adds one to the shared coun
 
 \clearpage
 \subsection{Hardware Results}
-A 15 s UART recording contained 30 complete messages, with counter values increasing consecutively from 33 to 62. All three tasks contributed updates, as summarised in Table~\ref{tab:hardware}. The recorded sequence contained no duplicated or missing counter values. Figure~\ref{fig:uart} shows the running application's serial output.
+A 15 s UART recording contained 30 complete messages, with counter values increasing consecutively from 33 to 62. All three tasks contributed updates (Table~\ref{tab:hardware}). The consecutive values are consistent with each successful acquisition preserving one counter increment. Figure~\ref{fig:uart} shows the task identifiers printed alongside the updated values.
 
 \begin{table}[H]
 \centering
@@ -147,7 +147,7 @@ Four tasks share a two-byte buffer. Task 1 attempts to write the values 0--9, mo
 
 \clearpage
 \subsection{Hardware Results}
-A 15 s recording contained 255 successful buffer accesses from all four tasks (Table~\ref{tab:buffer-results}). Of these messages, 139 reported one active permit holder and 116 reported two. The maximum reported occupancy was therefore two. The writer output values from 0 to 9, and all three reader tasks produced received values.
+All four tasks accessed the buffer during the 15 s recording (Table~\ref{tab:buffer-results}). The reported occupancy was one or two, with both permits occupied in 116 of 255 accesses (45.5\%). This demonstrates overlap between the access intervals of two tasks. Task 1 wrote values from 0 to 9, and all three readers retrieved values from the buffer.
 
 \begin{table}[H]
 \centering
@@ -215,6 +215,6 @@ When reception completes, the UART callback calls \texttt{osSemaphoreRelease(com
 A mutex cannot provide this handover: the interrupt is not the owning task, and mutex acquisition and release are unavailable in interrupt context. The semaphore directly represents completion of the receive operation and permits the interrupt to notify the waiting task.
 
 \section{Conclusion}
-The mutex application produced consecutive counter updates from three tasks. The counting-semaphore application admitted four tasks to a shared buffer with at most two permit holders; hardware output included occupancy values of both one and two. These applications demonstrate exclusive access and controlled shared access, while the UART completion example illustrates semaphore-based event signalling between an interrupt and a task.
+The access requirements determine the synchronisation primitive. Mutex ownership keeps the counter update and its UART message in one critical section, preserving the increment sequence across three tasks. A counting semaphore allows two buffer access intervals to overlap, as observed in the hardware output. A binary semaphore serves a different purpose by transferring a completion event from an interrupt to a waiting task.
 
 \end{document}
