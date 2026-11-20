@@ -51,7 +51,7 @@ def main():
                 time.sleep(0.001)
             transcript.append(received.decode("ascii"))
             print(command, received.decode("ascii").strip(), sep="\n", flush=True)
-        stack_free = target.read32(stack_address)
+        stack_free_words = target.read32(stack_address)
 
     with (data / "led_edges.csv").open("w", newline="", encoding="utf-8") as output:
         writer = csv.writer(output)
@@ -59,10 +59,11 @@ def main():
         writer.writerows(edges)
     (data / "uart.txt").write_text("".join(transcript), encoding="utf-8")
     (data / "stack.json").write_text(json.dumps({
-        "allocated_bytes": 1536, "minimum_unused_bytes": stack_free,
+        "allocated_bytes": 1536, "minimum_unused_words": stack_free_words,
+        "minimum_unused_bytes": stack_free_words * 4,
         "array_bytes": 600,
     }, indent=2) + "\n", encoding="utf-8")
-    print(f"Minimum unused LED task stack: {stack_free} bytes")
+    print(f"Minimum unused LED task stack: {stack_free_words * 4} bytes")
 
 
 if __name__ == "__main__":

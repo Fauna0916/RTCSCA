@@ -1,5 +1,6 @@
 {
   "allocated_bytes": 1536,
-  "minimum_unused_bytes": 192,
+  "minimum_unused_words": 192,
+  "minimum_unused_bytes": 768,
   "array_bytes": 600
 }

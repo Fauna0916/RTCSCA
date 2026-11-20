@@ -9,6 +9,7 @@
 #define QUEUE_EVENT 2U
 #define FRAME_LENGTH 11U
 #define QUEUE_LENGTH 4U
+#define RX_SLOTS 5U  /* Four completed frames and one frame being received. */
 
 extern UART_HandleTypeDef huart2;
 static osThreadId_t uart_thread;
@@ -16,12 +17,32 @@ static osThreadId_t led_thread;
 static osMessageQueueId_t queue1;
 static osMessageQueueId_t queue2;
 static osMessageQueueId_t queue3;
-static uint8_t frame[FRAME_LENGTH];
+static uint8_t rx_frames[RX_SLOTS][FRAME_LENGTH];
+static volatile uint32_t rx_write;
+static volatile uint32_t rx_read;
 
-/* Read in the debugger after a command to measure unused worker stack. */
+/* This project's CMSIS wrapper returns the FreeRTOS watermark in stack words. */
 volatile uint32_t task2_stack_free;
 
-static void ReceiveCommand(void)
+static uint32_t NextFrame(uint32_t slot)
+{
+  return (slot + 1U) % RX_SLOTS;
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *uart)
+{
+  if (uart->Instance == USART2) {
+    uint32_t next = NextFrame(rx_write);
+    /* Publish the frame and arm the next reception before returning from IRQ. */
+    if (next != rx_read) {
+      rx_write = next;
+    }
+    HAL_UART_Receive_IT(uart, rx_frames[rx_write], FRAME_LENGTH);
+    osThreadFlagsSet(uart_thread, UART_EVENT);
+  }
+}
+
+static void ReceiveCommand(uint8_t frame[FRAME_LENGTH])
 {
   uint16_t interval = 0U;
   uint32_t i;
@@ -39,31 +60,29 @@ static void ReceiveCommand(void)
     }
     interval = (uint16_t)(interval * 10U + frame[i] - '0');
   }
-  if (interval != 0U) {
-    osMessageQueuePut(queue1, &interval, 0U, osWaitForever);
-  }
+  osMessageQueuePut(queue1, &interval, 0U, osWaitForever);
 }
 
 static void UartTask(void *argument)
 {
-  uint32_t flags;
   uint32_t count;
   int maximum;
   (void)argument;
 
-  HAL_UART_Receive_IT(&huart2, frame, FRAME_LENGTH);
+  HAL_UART_Receive_IT(&huart2, rx_frames[rx_write], FRAME_LENGTH);
   for (;;) {
-    flags = osThreadFlagsWait(UART_EVENT | QUEUE_EVENT,
-                              osFlagsWaitAny, osWaitForever);
-    if ((flags & UART_EVENT) != 0U) {
-      ReceiveCommand();
-      HAL_UART_Receive_IT(&huart2, frame, FRAME_LENGTH);
+    if (rx_read == rx_write) {
+      osThreadFlagsWait(UART_EVENT | QUEUE_EVENT, osFlagsWaitAny, osWaitForever);
     }
     while (osMessageQueueGet(queue2, &count, NULL, 0U) == osOK) {
       Console_Number("Count: ", count);
     }
     while (osMessageQueueGet(queue3, &maximum, NULL, 0U) == osOK) {
       Console_Number("Max: ", (uint32_t)maximum);
+    }
+    if (rx_read != rx_write) {
+      ReceiveCommand(rx_frames[rx_read]);
+      rx_read = NextFrame(rx_read);
     }
   }
 }
@@ -131,14 +150,6 @@ void Task2_Start(void)
   queue3 = osMessageQueueNew(QUEUE_LENGTH, sizeof(int), NULL);
   uart_thread = osThreadNew(UartTask, NULL, &uart_attributes);
   led_thread = osThreadNew(LedTask, NULL, &led_attributes);
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *uart)
-{
-  if (uart->Instance == USART2) {
-    /* The task consumes the completed frame before reception is rearmed. */
-    osThreadFlagsSet(uart_thread, UART_EVENT);
-  }
 }
 
 #endif
