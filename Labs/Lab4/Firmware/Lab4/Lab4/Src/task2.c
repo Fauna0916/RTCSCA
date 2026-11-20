@@ -6,24 +6,29 @@ static volatile uint8_t buffer[2];
 
 static void AccessBuffer(uint32_t task_id, uint8_t value)
 {
-  /* Two permits admit at most two tasks; a failed attempt skips this access. */
-  if (osSemaphoreAcquire(buffer_slots, 0U) == osOK) {
-    if (task_id == 1U) {
-      buffer[1] = buffer[0];
-      buffer[0] = value;
-    } else {
-      value = buffer[1];
-    }
+  uint32_t active;
 
-    /* Serialize only the UART line; the buffer still has two access permits. */
-    osMutexAcquire(uart_mutex, osWaitForever);
-    Console_Buffer(task_id, value, 2U - osSemaphoreGetCount(buffer_slots));
-    osMutexRelease(uart_mutex);
-
-    /* Keep the access open for 50 ticks to make overlapping holders visible. */
-    osDelay(50U);
-    osSemaphoreRelease(buffer_slots);
+  /* A third contender skips this access when both permits are occupied. */
+  if (osSemaphoreAcquire(buffer_slots, 0U) != osOK) {
+    return;
   }
+  if (task_id == 1U) {
+    buffer[1] = buffer[0];
+    buffer[0] = value;
+  } else {
+    value = buffer[1];
+  }
+  active = 2U - osSemaphoreGetCount(buffer_slots);
+#ifdef LAB4_BUFFER_HOLD_TICKS
+  /* Extend the holding time only for the contention measurement. */
+  osDelay(LAB4_BUFFER_HOLD_TICKS);
+#endif
+  osSemaphoreRelease(buffer_slots);
+
+  /* Report the sampled value and occupancy after releasing the buffer. */
+  osMutexAcquire(uart_mutex, osWaitForever);
+  Console_Buffer(task_id, value, active);
+  osMutexRelease(uart_mutex);
 }
 
 static void WriterTask(void *argument)
