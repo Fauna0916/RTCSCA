@@ -56,7 +56,7 @@
 \hypersetup{pageanchor=true}
 
 \begin{abstract}
-An RTOS application must schedule urgent responses while exchanging data between tasks. This laboratory implements a brake indicator with a higher priority than its UART notification and an LED controller that exchanges commands and results through three queues. Hardware tests confirmed the button response and command-driven timing. Measured toggle intervals followed the requested 4:2:1 ratio and were approximately 0.6\% above the nominal delays. A 1536-byte stack accommodated the 150-integer local array, with 192 bytes unused at the maximum observed stack use.
+An RTOS application must schedule urgent responses while exchanging data between tasks. This laboratory implements a brake indicator with a higher priority than its UART notification and an LED controller that exchanges commands and results through three queues. Hardware tests confirmed the button response and command-driven timing. Measured toggle intervals followed the requested 4:2:1 ratio and were approximately 0.6\% above the nominal delays. A 1536-byte stack accommodated the 150-integer local array, with 768 bytes unused at the maximum observed stack use.
 \end{abstract}
 
 \section{Introduction}
@@ -114,9 +114,9 @@ Listing~\ref{lst:task1} contains the two tasks, their creation, and the external
 
 \clearpage
 \section{Task 2: UART Commands, Queues, and Memory}
-The UART task receives an eleven-byte frame through \texttt{HAL\_UART\_Receive\_IT}. The completion callback sets a thread flag; the task then echoes the frame and processes it. For \texttt{-DELAY 1000}, characters 2--6 identify \texttt{DELAY}, and characters 8--11 give the decimal interval. The parsed \texttt{uint16\_t} value is sent to queue 1.
+USART2 receives eleven bytes per interrupt-driven transfer. On completion, the callback makes the frame available to the UART task and arms reception for the next frame. Up to four completed frames can wait while the UART task transmits. It echoes each frame in arrival order. For \texttt{-DELAY 1000}, characters 2--6 identify \texttt{DELAY}, and characters 8--11 give the decimal interval. The task sends the parsed \texttt{uint16\_t} value to queue 1.
 
-The LED task waits on queue 1 with a timeout equal to the time remaining until the next toggle. A new command updates the interval and generates 150 random integers in a local array. The task scans the array and sends its maximum through queue 3. On each timeout it toggles LD2. Every ten toggles, it increments a cumulative counter and sends that value through queue 2. Queue updates notify the UART task, which prints the received values.
+The LED task waits on queue 1 until the next toggle is due. For each new command it fills a local array with 150 random integers, finds their maximum and sends it through queue 3. A positive interval schedules the next toggle. An interval of zero holds LD2 at its current level until another command arrives. Every ten toggles the task increments a cumulative counter and sends it through queue 2. After posting either result, the LED task signals the UART task to print it.
 
 \subsection{Queue and Stack Allocation}
 \begin{table}[H]
@@ -136,10 +136,10 @@ Queue & Item type & Width (bytes) & Payload (bytes) & Direction \\
 
 Four items allow several pending values to be retained while the receiving task runs. Queue 1 uses the required 16-bit interval type. Queue 2 uses a 32-bit cumulative count, and queue 3 matches the array's four-byte integer type. Their combined payload is 40 bytes; FreeRTOS also allocates queue control structures from the 8192-byte heap using \texttt{heap\_4}.
 
-The local array occupies $150\times4=600$ bytes. The LED task receives a 1536-byte stack, equivalent to 384 words, for the array, local variables, function calls, and saved context. Its measured minimum unused stack was 192 bytes, corresponding to a maximum observed use of 1344 bytes. The UART task receives a 1024-byte stack and Above Normal priority; the LED task uses Normal priority. This lets completed UART frames and queue results be processed promptly.
+The local array occupies $150\times4=600$ bytes. The LED task receives a 1536-byte stack, equivalent to 384 words, for the array, local variables, function calls, and saved context. The measured stack high-water mark was 192 unused words. At four bytes per word, 768 bytes remained free and the maximum observed use was 768 bytes. The UART task receives a 1024-byte stack and Above Normal priority. The LED task uses Normal priority, so the scheduler can service incoming frames and outgoing results promptly.
 
 \subsection{Serial Results}
-Figure~\ref{fig:task2-uart} shows commands echoed by the board and the subsequent queue values. Changing the interval produces a new maximum, while the toggle-group counter continues to increase. Leading zeros in \texttt{0250} are retained in the echo and converted to the integer 250 for queue 1.
+Figure~\ref{fig:task2-uart} shows the board echoing \texttt{0250} with its leading zero and printing the maximum and cumulative count. In a firmware simulation, the UART echoed four consecutive frames in order, including one without \texttt{DELAY}. Across six frames, all five reported maxima matched an independent scan of the 150-integer array on the LED task's stack.
 \begin{figure}[H]
 \centering
 \begin{minipage}[t]{0.47\textwidth}
@@ -158,12 +158,8 @@ Figure~\ref{fig:task2-uart} shows commands echoed by the board and the subsequen
 
 \clearpage
 \subsection{Implementation}
-The UART task is the sole owner of serial transmission. It rearms reception after consuming the completed frame and drains queues 2 and 3 when notified.
-\lstinputlisting[firstline=1,lastline=69,caption={Task 2: command parsing and UART task.},label={lst:uart}]{../Firmware/Lab3/Lab3/Src/task2.c}
-
-\clearpage
-The LED task maintains an absolute deadline between toggles. Queue reception can wake it before that deadline to apply a new interval and generate the array. The stack allocation and queue widths are set when the application starts.
-\lstinputlisting[firstline=71,lastline=144,firstnumber=71,caption={Task 2: LED task, queue creation, and receive callback.},label={lst:led}]{../Firmware/Lab3/Lab3/Src/task2.c}
+The receive interrupt fills the next frame while the UART task echoes the preceding one. Between frames, the UART task drains both result queues. The LED task maintains an absolute deadline between toggles and can wake earlier when a new command arrives.
+\lstinputlisting[caption={UART reception, the two application tasks and their three queues.},label={lst:task2}]{../Firmware/Lab3/Lab3/Src/task2.c}
 
 \clearpage
 \subsection{Measured LED Timing}
@@ -186,5 +182,5 @@ PA5 output states were sampled through ST-LINK while the application ran. Twelve
 The mean interval scales with the requested delay and is approximately 0.6\% above the nominal value in each case. A complete on/off cycle contains two toggles, so its period is $2T$. The counter is updated every ten toggles, corresponding to nominal update periods of 10, 5, and 2.5 s for the three commands.
 
 \section{Conclusion}
-The applications show how task readiness and priority jointly determine RTOS behaviour. The brake task acts first, then its blocking wait allows UART notification to proceed. Queue communication connects command reception to LED control. The measured 4:2:1 interval ratio shows that new commands set the toggle schedule. The measured 192 bytes of unused LED task stack confirm that the 1536-byte allocation accommodated the 150-integer array and the task's execution stack.
+The applications show how task readiness and priority jointly determine RTOS behaviour. The brake task acts first, then its blocking wait allows UART notification to proceed. In the second application, the measured 4:2:1 interval ratio shows that new commands set the toggle schedule. The LED task used at most half of its allocated stack during the recorded run, including the 600-byte array used to compute each maximum.
 \end{document}

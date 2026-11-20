@@ -9,7 +9,7 @@ The project contains two Keil targets for the NUCLEO-F103RB:
 
 Open `Firmware/Lab3/MDK-ARM/Lab3.uvprojx`, choose a target, build, and download through ST-LINK. The CubeMX configuration is `Firmware/Lab3/Lab3.ioc`. Application code is in `Firmware/Lab3/Lab3/Inc` and `Src`.
 
-For Task 2, open the virtual COM port at 115200 bit/s, 8N1 and send exactly `-DELAY 1000`, `-DELAY 0500`, or `-DELAY 0250` with the terminal's line ending set to None. The terminal displays the echoed command, `Max: ...`, and `Count: ...`. Each interval is the time between consecutive LED toggles; the complete on/off period is twice that interval.
+For Task 2, use the virtual COM port at 115200 bit/s, 8N1, with the terminal's line ending set to None. Send an eleven-byte frame such as `-DELAY 0375` to set a 375 ms inter-toggle interval. The four decimal digits accept values from 0000 to 9999. Zero holds the current LED state until the next positive interval. The receive interrupt accepts consecutive frames while the UART task echoes each one. A delay command produces a new `Max: ...` result. Every ten actual toggles produce a `Count: ...` result.
 
 `scripts/measure_hardware.py` records UART replies, PA5 output transitions through ST-LINK, and the LED task stack watermark. Run it with Task 2 loaded and the terminal port closed:
 
