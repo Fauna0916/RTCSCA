@@ -2,7 +2,7 @@
 
 Task 1 creates three Normal-priority tasks that increment a shared counter through one mutex. Each task attempts `osMutexAcquire(counterMutexHandle, 0)`, increments and transmits while it owns the mutex, releases it, and delays for 1000 ticks. The serial output identifies the task and the updated counter, for example `Task 2: 7`.
 
-Task 2 uses four tasks and a counting semaphore with an initial and maximum count of two. Task 1 shifts the previous buffer value and writes values from 0 to 9; tasks 2, 3, and 4 read the previous value. Each successful acquisition holds its permit for 50 ticks, so two overlapping accesses can be observed. UART output gives the operation, value, and number of active permit holders. A separate mutex serialises each UART line. The report also compares mutexes and semaphores and explains interrupt-to-task completion signalling.
+Task 2 uses four tasks and a counting semaphore with an initial and maximum count of two. Task 1 shifts the previous buffer value and writes values from 0 to 9. Tasks 2, 3, and 4 read the previous value. A successful task samples the buffer and permit occupancy, releases its permit, and prints through a separate UART mutex. The report also compares mutexes and semaphores and explains interrupt-to-task completion signalling.
 
 ## Project files
 
@@ -15,6 +15,6 @@ Build the selected target and download through ST-LINK. The targets define `LAB4
 
 Hardware testing recorded 30 consecutive counter values, from 33 to 62, in 15 seconds. Tasks 1, 2, and 3 contributed 8, 7, and 15 updates, respectively. The recording is in `report/data/task1_uart.txt`, and the report includes a live serial-terminal screenshot.
 
-Task 2 testing recorded 255 buffer accesses in 15 seconds: 143 writes and 112 reads across the three readers. The reported occupancy was one for 139 accesses and two for 116 accesses. The recording is in `report/data/task2_uart.txt`.
+The Task 2 contention measurement extended each holding interval by 50 ticks. To use this interval, add `LAB4_BUFFER_HOLD_TICKS=50` to the Task2 target's C defines. The recording in `report/data/task2_uart.txt` contains 143 writes and 112 reads in 15 seconds. Every read returned the preceding written value. One permit was occupied in 139 accesses and both were occupied in 116.
 
 For Task 1, the source implementation is selected over CubeMX's weak entry function by the linker. The startup selection is inside CubeMX user-code regions. Shared hardware and RTOS details are maintained in the repository-level `docs` directory.
