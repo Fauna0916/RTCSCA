@@ -34,6 +34,7 @@ Detailed reference material is maintained in `docs/hardware.md` and `docs/embedd
 ## Reports
 
 - Write reports in LaTeX using formal academic terminology.
+- Follow [Research Paper Writing Principles](<D:/Research/research-repo-principles/docs/WRITING_PRINCIPLES.md>) for argumentation and academic prose. Explain how the chosen mechanisms address each laboratory task and interpret the evidence supporting the result. Revise passages where the change improves clarity or reasoning.
 - Use `Abstract`, `Introduction`, task-numbered result sections, and `Conclusion`.
 - Present the result of each task and the overall laboratory outcome. Do not include build output as a report result.
 - Do not repeat common hardware, toolchain, workflow, or repository constraints in the report or on its title page.
